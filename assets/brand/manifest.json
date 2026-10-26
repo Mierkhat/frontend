@@ -1,0 +1,90 @@
+{
+  "owner_supplied": true,
+  "original_colors": ["#0B1B3A", "#FFFFFF"],
+  "assets": [
+    {
+      "file": "assets/brand/original/mierkhat-logo-preview.png",
+      "source": "/mnt/c/Users/enwer/Downloads/mierkhat-logo-preview.png",
+      "sha256": "3550fa34df518326b1f9bf53fb32174682edbf74c2f13e39376b3522f15cab4e",
+      "bytes": 48083
+    },
+    {
+      "file": "assets/brand/original/mierkhat-mark.svg",
+      "source": "/mnt/c/Users/enwer/Downloads/mierkhat-mark.svg",
+      "sha256": "2c71bec950faffbcc5865b1c65ffbe2471b4c22229577b12421a3c95a8f73520",
+      "bytes": 491
+    },
+    {
+      "file": "assets/brand/original/mierkhat-mark-white.svg",
+      "source": "/mnt/c/Users/enwer/Downloads/mierkhat-mark-white.svg",
+      "sha256": "eef268a5d1b5b7827e7996893d9c36efbe8a031c943b5c0dded3845c2a93d52f",
+      "bytes": 491
+    },
+    {
+      "file": "assets/brand/original/mierkhat-logo-white.svg",
+      "source": "/mnt/c/Users/enwer/Downloads/mierkhat-logo-white.svg",
+      "sha256": "70c38ae3c9d4a2fc84c084646aef94b427cbcabe10971981526161eb23a68036",
+      "bytes": 2868
+    },
+    {
+      "file": "assets/brand/original/mierkhat-logo.svg",
+      "source": "/mnt/c/Users/enwer/Downloads/mierkhat-logo.svg",
+      "sha256": "6182466a9df7e775038820748ffa465992e924b12ead753264296fe02adab94f",
+      "bytes": 2868
+    },
+    {
+      "file": "assets/brand/original/mierkhat-icon.svg",
+      "source": "/mnt/c/Users/enwer/Downloads/mierkhat-icon.svg",
+      "sha256": "2c785497c2a957e3927fee10c977dccf6d795c8fa1bfe6042f337daea34bfe2f",
+      "bytes": 623
+    }
+  ],
+  "theme_variants": [
+    {
+      "file": "assets/brand/theme/mierkhat-logo-light.svg",
+      "derived_from": "mierkhat-logo.svg",
+      "color_mapping": {
+        "#0B1B3A": "#143D2C"
+      },
+      "sha256": "bbebd74efcfc7be617331dd69f6e97c1d889bc91837d0c9f287955c332cfbf06",
+      "geometry_changed": false
+    },
+    {
+      "file": "assets/brand/theme/mierkhat-mark-light.svg",
+      "derived_from": "mierkhat-mark.svg",
+      "color_mapping": {
+        "#0B1B3A": "#143D2C"
+      },
+      "sha256": "fed8813e9731f847cb4a94fcf814b6cb3df4f61e293402b8735d03eba8d3069e",
+      "geometry_changed": false
+    },
+    {
+      "file": "assets/brand/theme/mierkhat-logo-dark.svg",
+      "derived_from": "mierkhat-logo-white.svg",
+      "color_mapping": {
+        "#FFFFFF": "#F2F0E7"
+      },
+      "sha256": "485bf42545c5172ef5347cfcfb182c60d70899ef659f1effccbdb20524f7a1cc",
+      "geometry_changed": false
+    },
+    {
+      "file": "assets/brand/theme/mierkhat-mark-dark.svg",
+      "derived_from": "mierkhat-mark-white.svg",
+      "color_mapping": {
+        "#FFFFFF": "#F2F0E7"
+      },
+      "sha256": "b95fa8e5af8601c549224783898125146a41971b3ff3ea555e6e340968af0298",
+      "geometry_changed": false
+    },
+    {
+      "file": "assets/brand/theme/mierkhat-favicon.svg",
+      "derived_from": "mierkhat-icon.svg",
+      "color_mapping": {
+        "#0B1B3A": "#143D2C",
+        "#FFFFFF": "#F2F0E7"
+      },
+      "sha256": "568a1074e8c7b595b6cfe91e393ed293b704daa924ed7ed1767a96be65f4f8d3",
+      "geometry_changed": false
+    }
+  ]
+}

@@ -12,13 +12,8 @@
     "esModuleInterop": true,
     "noUncheckedIndexedAccess": true,
     "jsx": "react-jsx",
-    "lib": [
-      "ES2022",
-      "DOM",
-      "DOM.Iterable"
-    ]
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "types": ["react"]
   },
-  "include": [
-    "src"
-  ]
+  "include": ["src"]
 }

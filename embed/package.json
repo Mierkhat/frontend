@@ -1,6 +1,29 @@
 {
- "name":"@mierkhat/react","version":"0.1.0","type":"module","files":["dist"],
- "exports":{".":{"types":"./dist/index.d.ts","import":"./dist/index.js"}},
- "peerDependencies":{"react":"^19.3.1"},"dependencies":{"@mierkhat/sdk":"workspace:^0.1.0"},
- "scripts":{"build":"tsc","typecheck":"tsc --noEmit"},"devDependencies":{"typescript":"7.0.2","@types/react":"19.2.2"}
+  "name": "@mierkhat/react",
+  "version": "0.1.0",
+  "type": "module",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "peerDependencies": {
+    "react": "^19.3.1"
+  },
+  "dependencies": {
+    "@mierkhat/sdk": "workspace:^0.1.0",
+    "@mierkhat/copy": "workspace:^0.1.0"
+  },
+  "scripts": {
+    "build": "rm -rf dist && tsc",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "7.0.2",
+    "@types/react": "19.2.2"
+  }
 }

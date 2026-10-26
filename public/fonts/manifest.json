@@ -1,0 +1,22 @@
+[
+  {
+    "file": "archivo.woff2",
+    "source": "https://registry.npmjs.org/@fontsource-variable/archivo/-/archivo-5.3.0.tgz",
+    "sha256": "8f704806dbedeaaeca334b11ec348bc3ac3a439d6431544b3afb54f534ee4967"
+  },
+  {
+    "file": "archivo-OFL.txt",
+    "source": "https://registry.npmjs.org/@fontsource-variable/archivo/-/archivo-5.3.0.tgz",
+    "sha256": "c3c8402eec0e31dc9a76851235b1c02a0bb821488b2db8e35bcc2ab60ca8fc2b"
+  },
+  {
+    "file": "bitter.woff2",
+    "source": "https://registry.npmjs.org/@fontsource-variable/bitter/-/bitter-5.3.0.tgz",
+    "sha256": "0efe0fbe6068354f3fad5a88bf31384051206652468eaa22232119354e7ea423"
+  },
+  {
+    "file": "bitter-OFL.txt",
+    "source": "https://registry.npmjs.org/@fontsource-variable/bitter/-/bitter-5.3.0.tgz",
+    "sha256": "b91c95cc26646b272255eb5a195f71fa369d96232754afdfe4e8e4f74eef427b"
+  }
+]
