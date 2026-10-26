@@ -1219,3 +1219,10 @@ footer {
     border-color: CanvasText;
   }
 }
+
+.amount-control input:disabled,
+.select-wrap select:disabled {
+  opacity: 1;
+  -webkit-text-fill-color: var(--muted);
+  color: var(--muted);
+}

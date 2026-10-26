@@ -375,6 +375,8 @@ export function ReviewPanel({
   review,
   bundle,
   example,
+  exampleShares = "100",
+  exampleMinimum = "99",
   onEdit,
   onSign,
   signing,
@@ -385,6 +387,8 @@ export function ReviewPanel({
   review: Review | null;
   bundle?: DeploymentBundle;
   example: boolean;
+  exampleShares?: string;
+  exampleMinimum?: string;
   onEdit: () => void;
   onSign: () => void;
   signing: boolean;
@@ -404,7 +408,7 @@ export function ReviewPanel({
           <dt>{t("success.spent")}</dt>
           <dd>
             {example
-              ? "100"
+              ? exampleShares
               : review && bundle
                 ? formatAmount(review.draft.intent.shares, bundle.shareDecimals)
                 : ""}
@@ -414,7 +418,7 @@ export function ReviewPanel({
           <dt>{t("action.minimum")}</dt>
           <dd>
             {example
-              ? "99"
+              ? exampleMinimum
               : review && bundle
                 ? formatAmount(
                     review.draft.intent.min_receive,
@@ -648,6 +652,10 @@ export function App() {
       "editing" | "preparing" | "review" | "signing" | "pending"
     >("editing"),
     [error, setError] = useState<CopyKey | null>(null),
+    [amountErrors, setAmountErrors] = useState<{
+      shares?: string;
+      minimum?: string;
+    }>({}),
     [observation, setObservation] = useState<Observation>(),
     [pending, setPending] = useState<PendingPointer | null>(null),
     [storageSaved, setStorageSaved] = useState(true),
@@ -865,6 +873,8 @@ export function App() {
     edit();
   }
   function edit() {
+    setError(null);
+    setAmountErrors({});
     controller.current.invalidate();
     setReview(null);
     setStage("editing");
@@ -879,17 +889,32 @@ export function App() {
   }
   async function prepare() {
     setError(null);
+    setAmountErrors({});
+    const shareDecimals = bundle?.shareDecimals ?? 7;
+    const outDecimals =
+      bundle?.tokens.find((t) => t.address === bundle.profile.settlement)
+        ?.decimals ?? 7;
+    let sharesRaw: string, minRaw: string;
+    try {
+      sharesRaw = parseAmount(shares, shareDecimals);
+    } catch (e) {
+      setAmountErrors({ shares: t(errorCopy(e), { decimals: shareDecimals }) });
+      setError("input.invalid");
+      return;
+    }
+    try {
+      minRaw = parseAmount(minimum, outDecimals);
+    } catch (e) {
+      setAmountErrors({ minimum: t(errorCopy(e), { decimals: outDecimals }) });
+      setError("input.invalid");
+      return;
+    }
     if (example) {
       setStage("review");
       return;
     }
     if (!bundle || !account) return;
     try {
-      const sharesRaw = parseAmount(shares, bundle.shareDecimals),
-        token = bundle.tokens.find(
-          (t) => t.address === bundle.profile.settlement,
-        )!;
-      const minRaw = parseAmount(minimum, token.decimals);
       setLowered(
         lastMinimum.current !== undefined &&
           BigInt(minRaw) < lastMinimum.current,
@@ -1057,6 +1082,7 @@ export function App() {
           <ThemeMenu />
           <button
             className="wallet-button"
+            aria-label={t(account ? "wallet.disconnect" : "wallet.connect")}
             onClick={
               account
                 ? () => {
@@ -1084,7 +1110,17 @@ export function App() {
             <CircleAlert {...iconProps} />
             <div>
               <strong>{t("error.summary")}</strong>
-              <p>{t(error, { decimals: settlement?.decimals ?? 7 })}</p>
+              {amountErrors.shares ? (
+                <a href="#sharestowithdraw">
+                  {t("action.shares")}: {amountErrors.shares}
+                </a>
+              ) : amountErrors.minimum ? (
+                <a href="#minimumtoreceive">
+                  {t("action.minimum")}: {amountErrors.minimum}
+                </a>
+              ) : (
+                <p>{t(error, { decimals: settlement?.decimals ?? 7 })}</p>
+              )}
             </div>
             <button
               className="quiet"
@@ -1166,6 +1202,8 @@ export function App() {
                     )}
                     {reviewVisible ? (
                       <ReviewPanel
+                        exampleShares={shares.trim()}
+                        exampleMinimum={minimum.trim()}
                         review={review}
                         bundle={
                           bundle ??
@@ -1240,6 +1278,7 @@ export function App() {
                         <div className="input-grid">
                           <AmountField
                             label={t("action.shares")}
+                            error={amountErrors.shares}
                             value={shares}
                             onChange={(v) => {
                               edit();
@@ -1259,6 +1298,7 @@ export function App() {
                           />
                           <AmountField
                             label={t("action.minimum")}
+                            error={amountErrors.minimum}
                             value={minimum}
                             onChange={(v) => {
                               edit();

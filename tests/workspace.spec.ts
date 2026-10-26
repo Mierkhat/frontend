@@ -12,6 +12,9 @@ for (const width of [320, 768, 1440])
       await page.getByLabel("Appearance").selectOption(theme);
       await expect(page).toHaveTitle("Mierkhat | Make your move");
       await expect(
+        page.getByRole("button", { name: "Connect your wallet" }),
+      ).toBeVisible();
+      await expect(
         page.getByRole("heading", { name: "Your minimum" }),
       ).toBeVisible();
       expect(
@@ -29,7 +32,17 @@ for (const width of [320, 768, 1440])
           "These are example assets. No real transaction can be signed here.",
         ),
       ).toBeVisible();
+      await page.getByLabel("Shares to withdraw").fill("notanumber");
       await page.getByRole("button", { name: "Preview example" }).click();
+      await expect(page.getByLabel("Shares to withdraw")).toHaveAttribute(
+        "aria-invalid",
+        "true",
+      );
+      await expect(page.getByRole("alert")).toContainText("Shares to withdraw");
+      await page.getByLabel("Shares to withdraw").fill("100");
+      await page.getByLabel("Minimum to receive").fill("98");
+      await page.getByRole("button", { name: "Preview example" }).click();
+      await expect(page.getByText("98", { exact: true })).toBeVisible();
       await expect(
         page.getByRole("button", { name: "Sign in your wallet" }),
       ).toBeDisabled();
