@@ -73,6 +73,7 @@ function errorCopy(error: unknown): CopyKey {
 }
 function Identity({ label, value }: { label: string; value: string }) {
   const [copied, setCopied] = useState(false);
+  const [copyFailed, setCopyFailed] = useState(false);
   return (
     <div className="identity">
       <span>{label}</span>
@@ -84,14 +85,24 @@ function Identity({ label, value }: { label: string; value: string }) {
           try {
             await navigator.clipboard.writeText(value);
             setCopied(true);
+            setCopyFailed(false);
           } catch {
             setCopied(false);
+            setCopyFailed(true);
           }
         }}
       >
         <Copy {...iconProps} />
         {copied ? t("details.copied") : t("details.copy")}
       </button>
+      <span role="status" className="sr-only">
+        {copied
+          ? t("details.copied")
+          : copyFailed
+            ? t("details.copy_failed")
+            : ""}
+      </span>
+      {copyFailed && <p>{t("details.copy_failed")}</p>}
     </div>
   );
 }
@@ -282,6 +293,48 @@ function PendingAction({
           </div>
         </dl>
       )}
+      {observation?.receipt && bundle && (
+        <Identity
+          label={t("route.identity")}
+          value={bundle.profile.settlement}
+        />
+      )}
+      {observation && (
+        <p className="muted">
+          {t("pending.last_checked", {
+            time: new Date(observation.observedAt).toLocaleTimeString(),
+          })}
+        </p>
+      )}
+      {observation?.receipt && (
+        <button
+          className="secondary"
+          onClick={() => {
+            const url = URL.createObjectURL(
+              new Blob(
+                [
+                  JSON.stringify(
+                    {
+                      environment: pointer.environment,
+                      ...observation,
+                    },
+                    null,
+                    2,
+                  ),
+                ],
+                { type: "application/json" },
+              ),
+            );
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = t("app.download_name") + ".json";
+            a.click();
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+          }}
+        >
+          {t("receipt.download")}
+        </button>
+      )}
       {observation?.ledger && (
         <p>
           {t("receipt.ledger")} <strong>{observation.ledger}</strong>
@@ -411,10 +464,22 @@ export function ReviewPanel({
                 <div key={n}>
                   <dt>{review.profile.assets[n]!.asset}</dt>
                   <dd>
-                    {t("review.withdraw_minima")}: {formatAmount(v,bundle?.tokens.find(t=>t.address===review.profile.assets[n]!.asset)?.decimals??0)}
+                    {t("review.withdraw_minima")}:{" "}
+                    {formatAmount(
+                      v,
+                      bundle?.tokens.find(
+                        (t) => t.address === review.profile.assets[n]!.asset,
+                      )?.decimals ?? 0,
+                    )}
                   </dd>
                   <dd>
-                    {t("review.swap_minima")}: {formatAmount(review.draft.intent.min_swap[n]!,bundle?.tokens.find(t=>t.address===review.profile.settlement)?.decimals??0)}
+                    {t("review.swap_minima")}:{" "}
+                    {formatAmount(
+                      review.draft.intent.min_swap[n]!,
+                      bundle?.tokens.find(
+                        (t) => t.address === review.profile.settlement,
+                      )?.decimals ?? 0,
+                    )}
                   </dd>
                 </div>
               ))}
@@ -1159,6 +1224,19 @@ export function App() {
                             <ChevronDown {...iconProps} />
                           </div>
                         </div>
+                        {balance && bundle && (
+                          <button
+                            className="text-button"
+                            onClick={() => {
+                              edit();
+                              setShares(
+                                formatAmount(balance, bundle.shareDecimals),
+                              );
+                            }}
+                          >
+                            {t("action.max")}
+                          </button>
+                        )}
                         <div className="input-grid">
                           <AmountField
                             label={t("action.shares")}

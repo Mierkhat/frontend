@@ -131,6 +131,9 @@ test("reload resumes hash monitoring and unknown never becomes failure", async (
     page.getByRole("heading", { name: "Your action is complete" }),
   ).toBeVisible();
   await expect(page.getByText("99.2054606", { exact: true })).toBeVisible();
+  const download = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Download receipt" }).click();
+  expect((await download).suggestedFilename()).toBe("Mierkhat receipt.json");
 });
 test("review links cannot enable an unbundled deployment", async ({ page }) => {
   await page.route("**/v1/reviews/**", (route) =>
