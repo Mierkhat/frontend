@@ -1,3 +1,4 @@
+import { WalletDialog } from "./components/WalletDialog.js";
 import { SubmissionRecovery } from "./components/SubmissionRecovery.js";
 import { useCallback, useEffect, useState, useRef } from "react";
 import {
@@ -34,8 +35,12 @@ export function App() {
   const [network, setNetwork] = useState<NetworkState>(),
     [networkError, setNetworkError] = useState<unknown>(),
     [identity, setIdentity] = useState<WalletIdentity>(),
-    [error, setError] = useState<unknown>(),
+    [walletError, setWalletError] = useState<unknown>(),
+    [walletPicker, setWalletPicker] = useState(false),
     [connecting, setConnecting] = useState(false);
+  const walletOpener = useRef<HTMLElement | null>(null);
+  const connectionGeneration = useRef(0),
+    connectionRequest = useRef<Promise<WalletIdentity> | undefined>(undefined);
   const path = location.pathname;
   useEffect(() => {
     if (path === "/" && location.hash === "#conditions")
@@ -94,21 +99,69 @@ export function App() {
     };
   }, [identity?.address, identity?.networkPassphrase]);
   async function connect() {
-    if (connecting) return;
+    walletOpener.current =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
+    setWalletError(undefined);
+    setWalletPicker(true);
+  }
+  function closeWalletPicker() {
+    connectionGeneration.current++;
+    const opener = walletOpener.current;
+    requestAnimationFrame(() => {
+      if (opener?.isConnected) opener.focus();
+    });
+    setWalletPicker(false);
+    setConnecting(false);
+    setWalletError(undefined);
+  }
+  async function selectFreighter() {
+    if (connectionRequest.current) {
+      setWalletError(
+        new MierkhatError("WalletRequestOpen", "wallet.request_open"),
+      );
+      return;
+    }
+    const generation = ++connectionGeneration.current;
     setConnecting(true);
-    setError(undefined);
+    setWalletError(undefined);
+    const request = connectWallet();
+    connectionRequest.current = request;
+    void request.then(
+      () => {
+        if (connectionRequest.current === request)
+          connectionRequest.current = undefined;
+      },
+      () => {
+        if (connectionRequest.current === request)
+          connectionRequest.current = undefined;
+      },
+    );
+    let timer: ReturnType<typeof setTimeout> | undefined;
     try {
-      const i = await connectWallet();
-      if (i.networkPassphrase !== bundle?.networkPassphrase)
+      const identity = await Promise.race([
+        request,
+        new Promise<never>((_, reject) => {
+          timer = setTimeout(
+            () => reject(new MierkhatError("WalletTimeout", "wallet.timeout")),
+            30000,
+          );
+        }),
+      ]);
+      if (generation !== connectionGeneration.current) return;
+      if (identity.networkPassphrase !== bundle?.networkPassphrase)
         throw new MierkhatError("Network", "network.wrong");
-      setIdentity(i);
+      setIdentity(identity);
       try {
         localStorage.setItem("mierkhat.connected", "freighter");
       } catch {}
-    } catch (e) {
-      setError(e);
+      setWalletPicker(false);
+    } catch (error) {
+      if (generation === connectionGeneration.current) setWalletError(error);
     } finally {
-      setConnecting(false);
+      clearTimeout(timer);
+      if (generation === connectionGeneration.current) setConnecting(false);
     }
   }
   function disconnect() {
@@ -187,16 +240,18 @@ export function App() {
     );
   return (
     <>
-      <Header network={network} />
-      {error && (
-        <div className="wrap global-error">
-          <ErrorNotice error={error} />
-        </div>
-      )}
-      {connecting && (
-        <div role="status" className="wrap connection-status">
-          <Busy />
-        </div>
+      <Header
+        network={network}
+        currentPath={path}
+        unavailable={!!networkError}
+      />
+      {walletPicker && (
+        <WalletDialog
+          connecting={connecting}
+          error={walletError}
+          onSelect={selectFreighter}
+          onClose={closeWalletPicker}
+        />
       )}
       {content}
       <Footer />

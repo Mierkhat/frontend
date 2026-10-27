@@ -1,4 +1,4 @@
-import catalog from "./en.json";
+import catalog from "./en.json" with {type:"json"};
 export type CopyKey = keyof typeof catalog;
 export function t(
   key: CopyKey,

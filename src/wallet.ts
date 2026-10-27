@@ -1,5 +1,6 @@
 import {
   getAddress,
+  isConnected,
   getNetworkDetails,
   requestAccess,
   signTransaction,
@@ -36,4 +37,27 @@ export async function connectWallet() {
   if (result.error || !result.address)
     throw new MierkhatError("WalletUnavailable", "wallet.unavailable");
   return wallet.identity();
+}
+
+export async function getFreighterAvailability(): Promise<
+  "available" | "missing" | "unavailable"
+> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    const result = await Promise.race([
+      isConnected(),
+      new Promise<never>((_, reject) => {
+        timer = setTimeout(() => reject(new Error("DetectionTimeout")), 3000);
+      }),
+    ]);
+    return result.error
+      ? "unavailable"
+      : result.isConnected
+        ? "available"
+        : "missing";
+  } catch {
+    return "unavailable";
+  } finally {
+    clearTimeout(timer);
+  }
 }

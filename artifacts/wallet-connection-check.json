@@ -1,0 +1,17 @@
+{
+  "checkedAt": "2026-10-27T10:44:45.807Z",
+  "wallet": "Freighter 5.49.0",
+  "network": "Stellar testnet",
+  "assertions": {
+    "genuineExtension": true,
+    "selectorBeforeApproval": true,
+    "extensionDetected": true,
+    "escapeReturnsFocus": true,
+    "walletSpecificProgress": true,
+    "connectedThroughActualApproval": true,
+    "noWorkspaceCtaOnWorkspace": true,
+    "darkMenuReadable": true,
+    "noInjectedWallet": true,
+    "noNetworkInterception": true
+  }
+}

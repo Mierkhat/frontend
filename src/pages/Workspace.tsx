@@ -774,6 +774,7 @@ export function Workspace({
                         <option value="100">{t("movement.large")}</option>
                       </select>
                     </label>
+                    <p className="fine-print">{t("exit.slippage_note")}</p>
                     <button
                       className="button secondary"
                       disabled={!ready || busy || !shares}

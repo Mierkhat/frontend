@@ -4,5 +4,5 @@ it("renders exact identifiers without rewriting them as editorial text", () => {
   const token = "USD-TEST";
   expect(
     t("action.minimum_summary", { amount: "900719925.4740993", token }),
-  ).toBe("Receive at least 900719925.4740993 USD-TEST");
+  ).toBe("Receive 900719925.4740993 USD-TEST or more");
 });

@@ -1,3 +1,4 @@
+import { t } from "@mierkhat/copy";
 /** Actual Freighter 5.49.0 and public Stellar testnet. No wallet injection or network interception. */
 import { chromium, expect } from "@playwright/test";
 import fs from "node:fs";
@@ -108,7 +109,7 @@ try {
     evidence.operations[label] = { hash };
     save();
     await expect(
-      app.getByRole("heading", { name: "Your transaction is complete" }),
+      app.getByRole("heading", { name: t("receipt.setup_success") }),
     ).toBeVisible({ timeout: 90000 });
     const result = await (
       await app.request.get(
@@ -128,25 +129,27 @@ try {
     await app.waitForTimeout(1000);
     if (app.url().includes("/receipt/")) {
       await expect(
-        app.getByRole("heading", { name: "Your transaction is complete" }),
+        app.getByRole("heading", { name: t("receipt.setup_success") }),
       ).toBeVisible({ timeout: 90000 });
       await app.goto("http://localhost:5173/app");
     }
     if (
       await app
-        .getByRole("button", { name: "Connect your wallet", exact: true })
+        .getByRole("button", { name: t("wallet.connect"), exact: true })
         .first()
         .isVisible()
     ) {
       const pending = c.waitForEvent("page");
       await app
-        .getByRole("button", { name: "Connect your wallet", exact: true })
+        .getByRole("button", { name: t("wallet.connect"), exact: true })
         .first()
         .click();
+      const picker = app.getByRole("dialog", { name: t("wallet.choose") });
+      await picker.getByRole("button", { name: /Freighter/ }).click();
       const popup = await pending;
       await popup.getByRole("button", { name: "Connect", exact: true }).click();
     }
-    await app.getByRole("heading", { name: "Get your wallet ready" }).waitFor();
+    await app.getByRole("heading", { name: t("setup.heading") }).waitFor();
     await expect
       .poll(() => account?.owner ?? evidence.owner, { timeout: 30000 })
       .toMatch(/^G[A-Z2-7]{55}$/);
@@ -157,7 +160,8 @@ try {
             .locator(".setup-actions button")
             .first()
             .evaluate(
-              (e) => !e.disabled || e.textContent.includes("Account funded"),
+              (e, expected) => !e.disabled || e.textContent.includes(expected),
+              t("setup.funded"),
             ),
         { timeout: 45000 },
       )
@@ -167,7 +171,7 @@ try {
     await app.getByRole("checkbox").check();
     const pending = c.waitForEvent("page");
     await app
-      .getByRole("button", { name: "Sign in Freighter", exact: true })
+      .getByRole("button", { name: t("common.approve"), exact: true })
       .click();
     const popup = await pending;
     await popup.getByRole("button", { name: "Confirm", exact: true }).waitFor();
@@ -186,20 +190,20 @@ try {
       "http://localhost:5173/receipt/" + evidence.operations.exit.hash,
     );
     await expect(
-      app.getByRole("heading", { name: "Your transaction is complete" }),
+      app.getByRole("heading", { name: t("receipt.setup_success") }),
     ).toBeVisible({ timeout: 45000 });
     console.log("PASS existing real Freighter journey verified by receipt");
     if (!evidence.operations.restoration) {
       await open();
-      await app.getByText("Contract maintenance", { exact: true }).click();
+      await app.getByText(t("restore.maintenance"), { exact: true }).click();
       await app
         .getByRole("button", {
-          name: "Review contract restoration",
+          name: t("restore.action"),
           exact: true,
         })
         .click();
       await app
-        .getByRole("heading", { name: "Restore this route", exact: true })
+        .getByRole("heading", { name: t("restore.heading"), exact: true })
         .waitFor();
       await sign("restoration");
       evidence.assertions.explicitRestorationTransactionConfirmed = true;
@@ -209,46 +213,52 @@ try {
     }
   } else {
     const fund = app.getByRole("button", {
-      name: "Fund account with testnet XLM",
+      name: t("setup.fund"),
       exact: true,
     });
     if (await fund.count()) {
       await expect(fund).toBeEnabled();
       await fund.click();
       await app
-        .getByRole("button", { name: "Account funded", exact: true })
+        .getByRole("button", { name: t("setup.funded"), exact: true })
         .waitFor({ timeout: 45000 });
     }
     evidence.funded = true;
     save();
     const trust = app.getByRole("button", {
-      name: "Approve token trustlines",
+      name: t("setup.trust"),
       exact: true,
     });
     if (await trust.count()) {
       await expect(trust).toBeEnabled();
       await trust.click();
       await app
-        .getByRole("heading", { name: "Allow these testnet assets" })
+        .getByRole("heading", { name: t("setup.trust_review") })
         .waitFor();
       await sign("trustlines");
       await open();
     }
     if (!evidence.operations.faucet) {
       await app
-        .getByRole("button", { name: "Receive testnet tokens", exact: true })
+        .getByRole("button", { name: t("setup.faucet"), exact: true })
         .click();
       await receipt("faucet");
       await open();
     }
     if (!evidence.operations.deposit) {
-      await app.getByRole("tab", { name: "Deposit", exact: true }).click();
-      await app.getByLabel("Deposit MKA", { exact: true }).fill("10");
-      await app.getByLabel("Deposit MKB", { exact: true }).fill("10");
       await app
-        .getByRole("button", { name: "Review deposit", exact: true })
+        .getByRole("tab", { name: t("workspace.deposit"), exact: true })
         .click();
-      await app.getByRole("heading", { name: "Review deposit" }).waitFor();
+      await app
+        .getByLabel(t("deposit.amount", { token: "MKA" }), { exact: true })
+        .fill("10");
+      await app
+        .getByLabel(t("deposit.amount", { token: "MKB" }), { exact: true })
+        .fill("10");
+      await app
+        .getByRole("button", { name: t("deposit.review"), exact: true })
+        .click();
+      await app.getByRole("heading", { name: t("deposit.review") }).waitFor();
       await app.screenshot({
         path: path.join(root, ".tooling/redesign/deposit-review-desktop.png"),
         fullPage: true,
@@ -262,17 +272,17 @@ try {
       )
     ).json();
     save();
-    await app.getByRole("button", { name: "Max", exact: true }).click();
     await app
-      .getByRole("button", { name: "Get live quote", exact: true })
-      .click();
-    await app.getByRole("heading", { name: "Your live route" }).waitFor();
-    await app
-      .getByRole("button", { name: "Review your action", exact: true })
+      .getByRole("button", { name: t("action.max"), exact: true })
       .click();
     await app
-      .getByRole("heading", { name: "Take a moment with the numbers" })
-      .waitFor();
+      .getByRole("button", { name: t("exit.quote"), exact: true })
+      .click();
+    await app.getByRole("heading", { name: t("exit.route") }).waitFor();
+    await app
+      .getByRole("button", { name: t("action.review"), exact: true })
+      .click();
+    await app.getByRole("heading", { name: t("review.heading") }).waitFor();
     await app.screenshot({
       path: path.join(root, ".tooling/redesign/exit-review-desktop.png"),
       fullPage: true,
@@ -281,7 +291,7 @@ try {
     await app.getByRole("checkbox").check();
     const pending = c.waitForEvent("page");
     await app
-      .getByRole("button", { name: "Sign in your wallet", exact: true })
+      .getByRole("button", { name: t("action.sign"), exact: true })
       .click();
     const popup = await pending;
     await popup.getByRole("button", { name: "Confirm", exact: true }).waitFor();
@@ -314,7 +324,7 @@ try {
     expect(after - before).toBe(BigInt(result.receipt.received));
     await app.reload();
     await expect(
-      app.getByRole("heading", { name: "Your transaction is complete" }),
+      app.getByRole("heading", { name: t("receipt.setup_success") }),
     ).toBeVisible();
     await expect(
       app
@@ -349,15 +359,27 @@ try {
   }
   if (process.env.MIERKHAT_CAPTURE_REVIEW === "1") {
     await open();
-    await app.getByRole("tab", { name: "Deposit", exact: true }).click();
-    await app.getByLabel("Deposit MKA", { exact: true }).fill("1");
-    await app.getByLabel("Deposit MKB", { exact: true }).fill("1");
     await app
-      .getByRole("button", { name: "Review deposit", exact: true })
+      .getByRole("tab", { name: t("workspace.deposit"), exact: true })
       .click();
     await app
-      .getByRole("heading", { name: "Review deposit", exact: true })
+      .getByLabel(t("deposit.amount", { token: "MKA" }), { exact: true })
+      .fill("1");
+    await app
+      .getByLabel(t("deposit.amount", { token: "MKB" }), { exact: true })
+      .fill("1");
+    await app
+      .getByRole("button", { name: t("deposit.review"), exact: true })
+      .click();
+    await app
+      .getByRole("heading", { name: t("deposit.review"), exact: true })
       .waitFor();
+    await app
+      .getByRole("button", { name: t("theme.label"), exact: true })
+      .click();
+    await app
+      .getByRole("menuitemradio", { name: t("theme.system"), exact: true })
+      .click();
     for (const width of [320, 768, 1440])
       for (const theme of ["light", "dark"]) {
         await app.setViewportSize({ width, height: 1000 });
@@ -386,25 +408,25 @@ try {
     if (!Number.isSafeInteger(pid) || pid <= 1)
       throw Error("Explicit owned API PID required");
     await open();
-    await app.getByText("Contract maintenance", { exact: true }).click();
+    await app.getByText(t("restore.maintenance"), { exact: true }).click();
     await app
-      .getByRole("button", { name: "Review contract restoration", exact: true })
+      .getByRole("button", { name: t("restore.action"), exact: true })
       .click();
     await app
-      .getByRole("heading", { name: "Restore this route", exact: true })
+      .getByRole("heading", { name: t("restore.heading"), exact: true })
       .waitFor();
     process.kill(pid, "SIGTERM");
     restartNeeded = true;
     await app.getByRole("checkbox").check();
     const pending = c.waitForEvent("page");
     await app
-      .getByRole("button", { name: "Sign in Freighter", exact: true })
+      .getByRole("button", { name: t("common.approve"), exact: true })
       .click();
     const popup = await pending;
     await popup.getByRole("button", { name: "Confirm", exact: true }).click();
     await expect(
       app.getByRole("button", {
-        name: "Resend the same signed transaction",
+        name: t("receipt.retry_submit"),
         exact: true,
       }),
     ).toBeVisible({ timeout: 60000 });
@@ -441,7 +463,7 @@ try {
     c.on("page", count);
     await app
       .getByRole("button", {
-        name: "Resend the same signed transaction",
+        name: t("receipt.retry_submit"),
         exact: true,
       })
       .click();

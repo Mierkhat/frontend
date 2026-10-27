@@ -48,6 +48,8 @@ export function Contracts({ bundle }: { bundle: DeploymentBundle }) {
 }
 export function Help() {
   const questions: [CopyKey, CopyKey][] = [
+    ["help.atomic", "help.atomic_body"],
+    ["help.settlement", "help.settlement_body"],
     ["app.help_wallet", "app.help_wallet_body"],
     ["help.fees", "app.help_fee_body"],
     ["help.pending", "help.pending_body"],

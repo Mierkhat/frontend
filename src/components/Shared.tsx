@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState, useRef, useId, type ReactNode } from "react";
 import {
   ArrowUpRight,
   Check,
@@ -11,6 +11,7 @@ import {
   X,
   LoaderCircle,
   CircleAlert,
+  ChevronDown,
 } from "lucide-react";
 import { MierkhatError, type NetworkState } from "@mierkhat/sdk";
 import { t, type CopyKey } from "../copy.js";
@@ -122,24 +123,138 @@ export function ThemeMenu() {
     } catch {}
     return () => media.removeEventListener("change", update);
   }, [choice]);
+  const [open, setOpen] = useState(false),
+    wrapper = useRef<HTMLDivElement>(null),
+    trigger = useRef<HTMLButtonElement>(null),
+    panel = useRef<HTMLDivElement>(null),
+    menuId = useId();
+  useEffect(() => {
+    if (!open) return;
+    panel.current
+      ?.querySelector<HTMLButtonElement>('[aria-checked="true"]')
+      ?.focus();
+    const outside = (event: PointerEvent) => {
+      if (!wrapper.current?.contains(event.target as Node)) setOpen(false);
+    };
+    document.addEventListener("pointerdown", outside);
+    return () => document.removeEventListener("pointerdown", outside);
+  }, [open]);
   const I = choice === "dark" ? Moon : choice === "light" ? Sun : Monitor;
+  function close() {
+    setOpen(false);
+    trigger.current?.focus();
+  }
   return (
-    <label className="theme-control">
-      <I {...icon} />
-      <span className="sr-only">{t("theme.label")}</span>
-      <select
-        value={choice}
-        onChange={(e) => setChoice(e.target.value)}
+    <div className="theme-control" ref={wrapper}>
+      <button
+        ref={trigger}
+        className="theme-trigger"
         aria-label={t("theme.label")}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-controls={menuId}
+        onClick={() => setOpen(!open)}
+        onKeyDown={(e) => {
+          if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+            e.preventDefault();
+            setOpen(true);
+          }
+        }}
       >
-        <option value="light">{t("theme.light")}</option>
-        <option value="dark">{t("theme.dark")}</option>
-        <option value="system">{t("theme.system")}</option>
-      </select>
-    </label>
+        <I {...icon} />
+        <span>
+          {t(
+            choice === "dark"
+              ? "theme.dark"
+              : choice === "light"
+                ? "theme.light"
+                : "theme.system",
+          )}
+        </span>
+        <ChevronDown {...icon} />
+      </button>
+      {open && (
+        <div
+          className="theme-options"
+          ref={panel}
+          id={menuId}
+          role="menu"
+          aria-label={t("theme.label")}
+          onKeyDown={(e) => {
+            if (e.key === "Escape") {
+              e.preventDefault();
+              e.stopPropagation();
+              close();
+              return;
+            }
+            if (e.key === "Tab") {
+              setOpen(false);
+              return;
+            }
+            const options = Array.from(
+                panel.current?.querySelectorAll<HTMLButtonElement>(
+                  '[role="menuitemradio"]',
+                ) ?? [],
+              ),
+              index = options.findIndex((el) => el === e.target);
+            const next =
+              e.key === "ArrowDown"
+                ? (index + 1) % options.length
+                : e.key === "ArrowUp"
+                  ? (index + options.length - 1) % options.length
+                  : e.key === "Home"
+                    ? 0
+                    : e.key === "End"
+                      ? options.length - 1
+                      : undefined;
+            if (next !== undefined) {
+              e.preventDefault();
+              options[next]?.focus();
+            }
+          }}
+        >
+          {(["light", "dark", "system"] as const).map((value) => {
+            const Icon =
+              value === "light" ? Sun : value === "dark" ? Moon : Monitor;
+            return (
+              <button
+                key={value}
+                role="menuitemradio"
+                aria-checked={choice === value}
+                tabIndex={choice === value ? 0 : -1}
+                onClick={() => {
+                  setChoice(value);
+                  close();
+                }}
+              >
+                <Icon {...icon} />
+                <span>
+                  {t(
+                    value === "light"
+                      ? "theme.light"
+                      : value === "dark"
+                        ? "theme.dark"
+                        : "theme.system",
+                  )}
+                </span>
+                {choice === value && <Check {...icon} />}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
   );
 }
-export function Header({ network }: { network?: NetworkState }) {
+export function Header({
+  network,
+  currentPath = "/",
+  unavailable = false,
+}: {
+  network?: NetworkState;
+  currentPath?: string;
+  unavailable?: boolean;
+}) {
   const [open, setOpen] = useState(false);
   return (
     <>
@@ -174,13 +289,30 @@ export function Header({ network }: { network?: NetworkState }) {
           <a href="/#conditions" onClick={() => setOpen(false)}>
             {t("nav.conditions")}
           </a>
-          <a href="/activity">{t("nav.activity")}</a>
-          <a href="/contracts">{t("nav.contracts")}</a>
-          <ThemeMenu />
-          <a className="button small" href="/app">
-            {t("home.open")}
-            <ArrowUpRight {...icon} />
+          <a
+            href="/activity"
+            aria-current={currentPath === "/activity" ? "page" : undefined}
+          >
+            {t("nav.activity")}
           </a>
+          <a
+            href="/contracts"
+            aria-current={currentPath === "/contracts" ? "page" : undefined}
+          >
+            {t("nav.contracts")}
+          </a>
+          <ThemeMenu />
+          {currentPath === "/app" ? (
+            <span className="nav-current" aria-current="page">
+              <Check {...icon} />
+              {t("nav.workspace")}
+            </span>
+          ) : (
+            <a className="button small" href="/app">
+              {t("home.open")}
+              <ArrowUpRight {...icon} />
+            </a>
+          )}
         </nav>
       </header>
       <div className="network-strip">
@@ -189,7 +321,7 @@ export function Header({ network }: { network?: NetworkState }) {
         <span className="network-ledger">
           {network
             ? t("network.live_ledger", { ledger: network.ledger })
-            : t("common.loading")}
+            : t(unavailable ? "common.unavailable" : "common.loading")}
         </span>
       </div>
     </>
