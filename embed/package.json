@@ -15,7 +15,7 @@
     "react": "^19.3.1"
   },
   "dependencies": {
-    "@mierkhat/sdk": "workspace:^0.1.0",
+    "@mierkhat/sdk": "file:../.vendor/mierkhat-sdk-0.1.0.tgz",
     "@mierkhat/copy": "workspace:^0.1.0"
   },
   "scripts": {

@@ -8,10 +8,11 @@
     "build": "vite build",
     "dev": "vite --host 0.0.0.0",
     "test": "vitest run",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "prebuild": "pnpm --filter @mierkhat/copy build && pnpm --filter @mierkhat/react build"
   },
   "dependencies": {
-    "@mierkhat/sdk": "workspace:^0.1.0",
+    "@mierkhat/sdk": "file:.vendor/mierkhat-sdk-0.1.0.tgz",
     "@stellar/freighter-api": "6.0.1",
     "react": "19.3.1",
     "react-dom": "19.3.1",
@@ -38,5 +39,9 @@
     "url": "https://github.com/Mierkhat/frontend/issues"
   },
   "homepage": "https://github.com/Mierkhat/frontend#readme",
-  "description": "Stellar testnet vault withdrawals with Freighter, explicit minimums and verified receipts."
+  "description": "Stellar testnet vault withdrawals with Freighter, explicit minimums and verified receipts.",
+  "packageManager": "pnpm@12.15.0",
+  "engines": {
+    "node": "24.22.1"
+  }
 }

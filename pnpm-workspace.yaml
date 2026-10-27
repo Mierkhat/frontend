@@ -1,0 +1,6 @@
+packages:
+  - copy
+  - embed
+allowBuilds:
+  esbuild: true
+  sharp: true
