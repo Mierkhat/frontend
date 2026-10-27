@@ -296,6 +296,22 @@ test("reveals sections once, keeps focused content visible and stops motion when
     .toBe(0);
   await summary.press("Enter");
   await expect(condition.locator("p")).toBeVisible();
+  // Connection/account changes remount the root workspace. Replacing the real
+  // rendered main checks the same DOM lifecycle without altering wallet/RPC data.
+  await page.evaluate(() => {
+    const main = document.querySelector("main")!;
+    main.replaceWith(main.cloneNode(true));
+  });
+  await expect
+    .poll(() =>
+      condition.evaluate(
+        (el) =>
+          el
+            .getAnimations()
+            .filter((animation) => animation.playState === "running").length,
+      ),
+    )
+    .toBeGreaterThan(0);
   await page.emulateMedia({ reducedMotion: "reduce" });
   await expect
     .poll(() =>

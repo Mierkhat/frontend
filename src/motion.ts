@@ -81,7 +81,9 @@ export function usePageMotion(path: string) {
         for (const node of record.addedNodes)
           if (node instanceof Element) register(node);
     });
-    mutations.observe(main, { childList: true, subtree: true });
+    // Wallet identity changes intentionally remount the entire workspace main.
+    // Observe its stable parent so new reviews still get motion after connection.
+    mutations.observe(document.body, { childList: true, subtree: true });
     const focused = (event: FocusEvent) => {
       if (!(event.target instanceof Element)) return;
       // Never fade or move the control a keyboard user has just reached.
@@ -95,13 +97,13 @@ export function usePageMotion(path: string) {
         finish();
       }
     };
-    main.addEventListener("focusin", focused);
+    document.body.addEventListener("focusin", focused);
     preference.addEventListener("change", changed);
     return () => {
       observer.disconnect();
       mutations.disconnect();
       finish();
-      main.removeEventListener("focusin", focused);
+      document.body.removeEventListener("focusin", focused);
       preference.removeEventListener("change", changed);
     };
   }, [path]);
