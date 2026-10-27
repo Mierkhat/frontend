@@ -1,6 +1,6 @@
 import {
   bundleSchema,
-  decodeReceipt,
+  decodeKnownReceipt,
   MierkhatError,
   rpc,
   type DeploymentBundle,
@@ -10,6 +10,7 @@ import {
   type Observation,
   type NetworkState,
   type AccountState,
+  type PositionsState,
   type ExitQuote,
   type SetupDraft,
   type SetupReview,
@@ -48,16 +49,24 @@ async function request<T>(
 }
 export const api = {
   network: () => request<NetworkState>("/network"),
-  account: (owner: string) =>
-    request<AccountState>("/accounts/" + encodeURIComponent(owner)),
+  account: (owner: string, epoch?: string) =>
+    request<AccountState>(
+      "/accounts/" +
+        encodeURIComponent(owner) +
+        (epoch ? "?epoch=" + encodeURIComponent(epoch) : ""),
+    ),
+  positions: (owner: string) =>
+    request<PositionsState>(
+      "/accounts/" + encodeURIComponent(owner) + "/positions",
+    ),
   fund: (owner: string) => request<AccountState>("/testnet/fund", { owner }),
-  faucet: (owner: string) =>
+  faucet: (owner: string, epoch?: string) =>
     request<{ hash: string; amounts: { symbol: string; amount: string }[] }>(
       "/testnet/faucet",
-      { owner },
+      { owner, epoch },
     ),
-  quote: (owner: string, shares: string) =>
-    request<ExitQuote>("/exit/quote", { owner, shares }),
+  quote: (owner: string, shares: string, epoch?: string) =>
+    request<ExitQuote>("/exit/quote", { owner, shares, epoch }),
   prepare: (d: ExitDraft) => request<Review>("/exit/prepare", d),
   review: (id: string, environment = "testnet") =>
     request<Review>(
@@ -75,7 +84,8 @@ export const api = {
       },
       { "Idempotency-Key": a.signedEnvelopeDigest },
     ),
-  setupPrepare: (d: SetupDraft) => request<SetupReview>("/setup/prepare", d),
+  setupPrepare: (d: SetupDraft, epoch?: string) =>
+    request<SetupReview>("/setup/prepare", { ...d, epoch }),
   setupSubmit: (signedXdr: string, review: SetupReview) =>
     request<{ hash: string }>("/setup/submit", { signedXdr, review }),
   status: async (
@@ -89,7 +99,11 @@ export const api = {
     } catch {
       const b = knownDeployments.find((b) => b.environment === environment);
       if (!b) throw new MierkhatError("Environment", "network.wrong");
-      return decodeReceipt(reader, b, hash);
+      return decodeKnownReceipt(
+        reader,
+        knownDeployments.filter((b) => b.environment === environment),
+        hash,
+      );
     }
   },
 };

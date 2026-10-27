@@ -21,7 +21,7 @@ import {
   type Observation,
   type RecoveryRecord,
 } from "@mierkhat/sdk";
-import { api } from "../api.js";
+import { api, knownDeployments } from "../api.js";
 import { t, type CopyKey } from "../copy.js";
 import {
   Busy,
@@ -159,7 +159,7 @@ export function Activity() {
 }
 export function ReceiptPage({
   hash,
-  bundle,
+  bundle: initialBundle,
 }: {
   hash: string;
   bundle: DeploymentBundle;
@@ -173,12 +173,20 @@ export function ReceiptPage({
     () =>
       records().find((r) => r.hash === hash) ?? {
         environment: "testnet",
-        epoch: bundle.epoch,
+        epoch: initialBundle.epoch,
         hash,
         intentHash: "",
         createdAt: new Date().toISOString(),
       },
   );
+  const bundle =
+    knownDeployments.find(
+      (b) => b.profileHash === observation?.receipt?.profileHash,
+    ) ??
+    knownDeployments.find(
+      (b) => b.epoch === record.epoch && b.environment === record.environment,
+    ) ??
+    initialBundle;
   useEffect(() => {
     if (!valid) return;
     try {
@@ -233,7 +241,10 @@ export function ReceiptPage({
     );
   const success = observation?.state === "succeeded",
     failed = observation?.state === "failed",
-    receipt = observation?.receipt,
+    receipt =
+      observation?.receipt?.profileHash === bundle.profileHash
+        ? observation.receipt
+        : undefined,
     token = bundle.tokens.find((t) => t.address === bundle.profile.settlement)!;
   function download() {
     const data = {
@@ -288,9 +299,11 @@ export function ReceiptPage({
                 : "receipt.no_guard"
               : failed
                 ? "failure.body"
-                : observation?.state === "unknown"
-                  ? "pending.unknown"
-                  : "pending.body",
+                : observation?.rawStatus === "SUCCESS_AWAITING_RECEIPT"
+                  ? "receipt.awaiting_metadata"
+                  : observation?.state === "unknown"
+                    ? "pending.unknown"
+                    : "pending.body",
           )}
         </p>
       </div>

@@ -97,7 +97,7 @@ try {
   app.on("pageerror", (e) => pageErrors.push(e.message));
   let account;
   app.on("response", async (r) => {
-    if (/\/v1\/accounts\/G/.test(r.url()) && r.ok()) {
+    if (/\/v1\/accounts\/G[A-Z2-7]{55}(?:\?|$)/.test(r.url()) && r.ok()) {
       account = await r.json();
       evidence.owner = account.owner;
       save();

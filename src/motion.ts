@@ -11,6 +11,7 @@ const surfaces = [
   ".portfolio",
   ".connect-panel",
   ".setup-strip",
+  ".vault-selection",
   ".action-editor",
   ".review-panel",
   ".receipt-status",

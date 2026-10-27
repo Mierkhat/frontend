@@ -82,7 +82,10 @@ try {
         console.log("Live API error reference", error.code ?? "Unavailable");
       }
     }
-    if (/\/v1\/accounts\/G/.test(response.url()) && response.ok())
+    if (
+      /\/v1\/accounts\/G[A-Z2-7]{55}(?:\?|$)/.test(response.url()) &&
+      response.ok()
+    )
       account = await response.json();
     if (response.url().endsWith("/v1/exit/quote") && response.ok())
       latestQuote = await response.json();

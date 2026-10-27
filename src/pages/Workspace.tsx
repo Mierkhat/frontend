@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useId, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import {
   ArrowUpRight,
   Check,
@@ -53,15 +60,22 @@ export function Workspace({
   identity,
   connect,
   disconnect,
+  mode,
+  onModeChange,
+  selection,
+  onLockChange,
 }: {
   bundle: DeploymentBundle;
   identity?: WalletIdentity;
   connect: () => Promise<void>;
   disconnect: () => void;
+  mode: "exit" | "deposit";
+  onModeChange: (mode: "exit" | "deposit") => void;
+  selection?: ReactNode;
+  onLockChange?: (locked: boolean) => void;
 }) {
   const editorId = useId();
   const [account, setAccount] = useState<AccountState>(),
-    [mode, setMode] = useState<"exit" | "deposit">("exit"),
     [shares, setShares] = useState(""),
     [amounts, setAmounts] = useState<string[]>(
       bundle.profile.assets.map(() => ""),
@@ -86,9 +100,13 @@ export function Workspace({
       saved: boolean;
     }>(),
     [balanceLoading, setBalanceLoading] = useState(false);
+  const busyRef = useRef(false);
   const generation = useRef(0),
     controller = useRef(new ExitController()),
     prompt = useRef(false);
+  useEffect(() => {
+    onLockChange?.(busy || signing || !!unsent);
+  }, [busy, signing, unsent, onLockChange]);
   const owner = identity?.address,
     settlement = bundle.tokens.find(
       (t) => t.address === bundle.profile.settlement,
@@ -97,17 +115,19 @@ export function Workspace({
     if (!owner) return;
     setBalanceLoading(true);
     try {
-      const result = await api.account(owner);
+      const result = await api.account(owner, bundle.epoch);
       setAccount(result);
     } catch (e) {
       setError(e);
     } finally {
       setBalanceLoading(false);
     }
-  }, [owner]);
+  }, [owner, bundle.epoch]);
   useEffect(() => {
     void refresh();
-    const timer = setInterval(() => void refresh(), 15000);
+    const timer = setInterval(() => {
+      if (!busyRef.current && !prompt.current) void refresh();
+    }, 15000);
     return () => {
       clearInterval(timer);
       generation.current++;
@@ -133,11 +153,12 @@ export function Workspace({
   }
   function changeMode(v: "exit" | "deposit") {
     invalidate();
-    setMode(v);
+    onModeChange(v);
     setQuote(undefined);
   }
   async function work(fn: () => Promise<void>) {
     if (prompt.current) return;
+    busyRef.current = true;
     setBusy(true);
     setError(undefined);
     try {
@@ -146,6 +167,7 @@ export function Workspace({
       setError(e);
       setErrorFocusRequest((request) => request + 1);
     } finally {
+      busyRef.current = false;
       setBusy(false);
     }
   }
@@ -167,7 +189,7 @@ export function Workspace({
             .map((t) => t.address),
         },
         g = ++generation.current;
-      const r = await api.setupPrepare(draft);
+      const r = await api.setupPrepare(draft, bundle.epoch);
       verifySetup(r, draft, bundle, await reviewLedger(reader, owner));
       if (g === generation.current) {
         setSetup(r);
@@ -187,7 +209,7 @@ export function Workspace({
           minimumsRaw: [],
           trustAssets: [],
         },
-        r = await api.setupPrepare(draft);
+        r = await api.setupPrepare(draft, bundle.epoch);
       verifySetup(r, draft, bundle, await reviewLedger(reader, owner));
       if (g === generation.current) setSetup(r);
     });
@@ -201,7 +223,7 @@ export function Workspace({
       if (BigInt(raw) > BigInt(account?.sharesRaw ?? "0"))
         throw new MierkhatError("Balance", "exit.balance");
       const g = generation.current,
-        q = await api.quote(owner, raw);
+        q = await api.quote(owner, raw, bundle.epoch);
       if (g !== generation.current) return;
       setQuote(q);
       setMinimum(
@@ -239,7 +261,7 @@ export function Workspace({
             ),
             trustAssets: [],
           },
-          r = await api.setupPrepare(d);
+          r = await api.setupPrepare(d, bundle.epoch);
         verifySetup(r, d, bundle, await reviewLedger(reader, owner));
         if (g === generation.current) setSetup(r);
         return;
@@ -253,7 +275,7 @@ export function Workspace({
       let currentQuote = quote;
       if (Date.now() / 1000 - Number(currentQuote.timestamp) > 20) {
         setWithdrawalStage("refreshing");
-        currentQuote = await api.quote(owner, rawShares);
+        currentQuote = await api.quote(owner, rawShares, bundle.epoch);
         if (g !== generation.current) return;
         if (currentQuote.sharesRaw !== rawShares)
           throw new MierkhatError("QuoteMismatch", "route.unsupported");
@@ -379,6 +401,7 @@ export function Workspace({
       else await run();
     } catch (e) {
       setError(e);
+      setErrorFocusRequest((request) => request + 1);
     } finally {
       prompt.current = false;
       setSigning(false);
@@ -387,7 +410,7 @@ export function Workspace({
   async function faucet() {
     await work(async () => {
       const owner = assertAccount(),
-        r = await api.faucet(owner),
+        r = await api.faucet(owner, bundle.epoch),
         record: RecoveryRecord = {
           environment: "testnet",
           epoch: bundle.epoch,
@@ -436,7 +459,7 @@ export function Workspace({
             <h2>{t("workspace.portfolio")}</h2>
             <button
               className="text-button"
-              disabled={!owner || balanceLoading}
+              disabled={!owner || balanceLoading || busy || signing || !!unsent}
               aria-label={t("workspace.refresh")}
               onClick={() => void refresh()}
             >
@@ -496,12 +519,16 @@ export function Workspace({
             <ShieldCheck {...icon} />
             <p>{t("workspace.action_note")}</p>
           </div>
-          <a className="text-link" href="/contracts">
+          <a
+            className="text-link"
+            href={"/contracts?epoch=" + encodeURIComponent(bundle.epoch)}
+          >
             {t("route.contracts")}
             <ArrowUpRight {...icon} />
           </a>
         </aside>
         <div className="workspace-main">
+          {selection}
           <ErrorNotice error={error} focusRequest={errorFocusRequest} />
           {unsent && (
             <SubmissionRecovery
@@ -582,7 +609,8 @@ export function Workspace({
                     disabled={busy || !account || account.funded}
                     onClick={() =>
                       void work(async () => {
-                        setAccount(await api.fund(assertAccount()));
+                        await api.fund(assertAccount());
+                        await refresh();
                       })
                     }
                   >
@@ -872,13 +900,21 @@ export function Workspace({
                               </span>
                               <ChevronRight {...icon} />
                               <span>
-                                <b>
-                                  {formatAmount(
-                                    quote.swappedRaw[i]!,
-                                    settlement.decimals,
-                                  )}
-                                </b>{" "}
-                                {settlement.symbol}
+                                {a.asset === settlement.address ? (
+                                  t("exit.direct_output", {
+                                    token: settlement.symbol,
+                                  })
+                                ) : (
+                                  <>
+                                    <b>
+                                      {formatAmount(
+                                        quote.swappedRaw[i]!,
+                                        settlement.decimals,
+                                      )}
+                                    </b>{" "}
+                                    {settlement.symbol}
+                                  </>
+                                )}
                               </span>
                             </div>
                           );

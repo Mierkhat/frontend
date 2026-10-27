@@ -121,11 +121,17 @@ export function ReviewPanel({
               <div>
                 <dt>{t("review.swap_minima")}</dt>
                 <dd>
-                  {formatAmount(
-                    review.draft.intent.min_swap[n]!,
-                    token.decimals,
-                  )}{" "}
-                  {token.symbol}
+                  {a.asset === token.address ? (
+                    t("review.no_swap")
+                  ) : (
+                    <>
+                      {formatAmount(
+                        review.draft.intent.min_swap[n]!,
+                        token.decimals,
+                      )}{" "}
+                      {token.symbol}
+                    </>
+                  )}
                 </dd>
               </div>
             </dl>

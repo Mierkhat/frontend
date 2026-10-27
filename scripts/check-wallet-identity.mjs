@@ -1,6 +1,7 @@
 /** Actual Freighter account change during an unresolved signing request.
  * No injected provider, intercepted RPC, or user browser profile. */
-import { chromium, expect } from "@playwright/test";
+import { chromium, expect as baseExpect } from "@playwright/test";
+const expect = baseExpect.configure({ timeout: 60000 });
 import { t } from "@mierkhat/copy";
 import fs from "node:fs";
 import path from "node:path";

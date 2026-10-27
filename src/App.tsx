@@ -13,7 +13,7 @@ import {
   type RecoveryRecord,
   type SignedAttempt,
 } from "@mierkhat/sdk";
-import { api, bundles, reader } from "./api.js";
+import { api, bundles, knownDeployments, reader } from "./api.js";
 import { connectWallet, wallet } from "./wallet.js";
 import { t } from "./copy.js";
 import { usePageMotion } from "./motion.js";
@@ -26,7 +26,8 @@ import {
 } from "./components/Shared.js";
 import { ReviewPanel } from "./components/Review.js";
 import { Home } from "./pages/Home.js";
-import { Workspace, type WalletIdentity } from "./pages/Workspace.js";
+import { type WalletIdentity } from "./pages/Workspace.js";
+import { PositionsWorkspace } from "./pages/PositionsWorkspace.js";
 import { Activity, ReceiptPage } from "./pages/Activity.js";
 import { Contracts, Help } from "./pages/Information.js";
 export { ReviewPanel } from "./components/Review.js";
@@ -213,7 +214,7 @@ export function App() {
     );
   else if (path === "/app")
     content = (
-      <Workspace
+      <PositionsWorkspace
         key={(identity?.address ?? "") + (identity?.networkPassphrase ?? "")}
         bundle={bundle}
         identity={
@@ -230,8 +231,21 @@ export function App() {
     content = (
       <ReceiptPage bundle={bundle} hash={path.slice("/receipt/".length)} />
     );
-  else if (path === "/contracts") content = <Contracts bundle={bundle} />;
-  else if (path === "/help") content = <Help />;
+  else if (path === "/contracts") {
+    const epoch = new URLSearchParams(location.search).get("epoch");
+    const selected = epoch
+      ? knownDeployments.find(
+          (b) => b.epoch === epoch && b.environment === "testnet",
+        )
+      : bundle;
+    content = selected ? (
+      <Contracts bundle={selected} />
+    ) : (
+      <main id="main" className="wrap standard-page">
+        <h1>{t("route.unsupported")}</h1>
+      </main>
+    );
+  } else if (path === "/help") content = <Help />;
   else if (path.startsWith("/review/"))
     content = (
       <SharedReview
@@ -302,6 +316,10 @@ function SharedReview({
       active = false;
     };
   }, [id]);
+  const bundle = bundles.find(
+    (b) =>
+      b.epoch === review?.draft.epoch && b.profileHash === review.profileHash,
+  );
   async function sign() {
     if (!review || !bundle || signing) return;
     setSigning(true);

@@ -33,7 +33,7 @@ pnpm dev
 
 Open http://localhost:5173. Run the [backend](https://github.com/Mierkhat/backend#quick-start) on `127.0.0.1:3001` in another terminal. Vite forwards `/v1` requests to it. Install and unlock Freighter, select Stellar testnet, then use **Connect wallet** to select it.
 
-The workspace guides you through account funding, token trustlines, testnet token issuance, a vault deposit and a guarded withdrawal. The faucet needs the backend's dedicated issuer configuration; it never substitutes fabricated balances when that configuration is missing.
+The workspace guides you through account funding, token trustlines, testnet token issuance, a vault deposit and a guarded withdrawal. Withdrawals show one position per supported vault and let you choose a pinned output token. Both actual testnet vaults support MKA, MKB and MKOUT outputs. The faucet needs the backend's dedicated issuer configuration; it never substitutes fabricated balances when that configuration is missing.
 
 The exact SDK tarball is committed under `.vendor/` so a fresh clone builds before the SDK has a registry release. `.vendor/manifest.json` records its provenance and checksum. Application and embed use the same archive. The `prebuild` script compiles the copy package and embed first.
 
