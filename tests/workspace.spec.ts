@@ -129,6 +129,7 @@ test("supports keyboard navigation and correct metadata without enabling an unkn
     await page.locator('meta[property="og:title"]').getAttribute("content"),
   ).toBe(t("title.home"));
   await page.goto("/contracts");
+  await expect(page).toHaveTitle(t("title.contracts"));
   await page
     .getByRole("link", { name: t("nav.conditions"), exact: true })
     .click();
@@ -138,6 +139,7 @@ test("supports keyboard navigation and correct metadata without enabling an unkn
     }),
   ).toBeInViewport();
   await page.goto("/review/00000000-0000-4000-8000-000000000000");
+  await expect(page).toHaveTitle(t("title.review"));
   await expect(page.getByRole("alert")).toBeVisible({ timeout: 20000 });
   await expect(
     page.getByRole("button", { name: t("action.sign") }),

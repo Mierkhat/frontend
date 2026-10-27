@@ -176,14 +176,23 @@ export function App() {
     document.title = t(
       path === "/app"
         ? "title.workspace"
-        : path.startsWith("/receipt/")
-          ? "title.receipt"
-          : path === "/activity"
-            ? "title.activity"
-            : path === "/help"
-              ? "title.help"
-              : "title.home",
+        : path.startsWith("/review/")
+          ? "title.review"
+          : path.startsWith("/receipt/")
+            ? "title.receipt"
+            : path === "/activity"
+              ? "title.activity"
+              : path === "/help"
+                ? "title.help"
+                : path === "/contracts"
+                  ? "title.contracts"
+                  : path === "/"
+                    ? "title.home"
+                    : "title.not_found",
     );
+    document
+      .querySelector('meta[property="og:title"]')
+      ?.setAttribute("content", document.title);
   }, [path]);
   let content;
   if (!bundle)

@@ -30,3 +30,5 @@ The setup helper verifies the official Freighter 5.49.0 archive checksum. The is
 Edit `copy/src/en.json` and preserve interpolation names. `pnpm build` compiles the copy package and embed. Run `pnpm exec node scripts/assets.mjs` for metadata/brand changes, then inspect generated PNGs. Font license texts stay next to font files.
 
 For an SDK update, build/pack from the backend, replace `.vendor/`'s archive and provenance, update app/embed `file:` references, regenerate the lockfile and repeat relevant acceptance checks. A fresh clone already includes the SDK archive; no npm publication is required.
+
+`pnpm exec node scripts/check-wallet-identity.mjs` additionally verifies the actual connected tab keyboard/ARIA flow, opens a real restoration signing prompt, selects a different account through Freighter, and confirms that a late original approval produces no submission. It uses only the dedicated extension profile; public evidence goes into sibling `contracts/evidence/freighter-identity-change.json`. The helper restores the original selected test account and closes its browser in `finally`.

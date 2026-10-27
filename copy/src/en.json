@@ -380,5 +380,7 @@
   "help.settlement": "Which token do I receive after the swaps?",
   "help.settlement_body": "The settlement token is what this route sends back after the swaps. A vault can hold several assets, but Mierkhat converts what you withdraw into that one token. Check its symbol and contract address in the review before signing.",
   "help.atomic": "Why put the withdrawal and swaps together?",
-  "help.atomic_body": "Separate transactions can complete independently. A withdrawal could succeed before a later swap fails. Mierkhat runs its supported withdrawal and swaps in one transaction, then checks the final amount received. A failed check reverses that transaction's asset changes, though Stellar can still charge a fee."
+  "help.atomic_body": "Separate transactions can complete independently. A withdrawal could succeed before a later swap fails. Mierkhat runs its supported withdrawal and swaps in one transaction, then checks the final amount received. A failed check reverses that transaction's asset changes, though Stellar can still charge a fee.",
+  "title.contracts": "Mierkhat | Contracts and token addresses",
+  "title.not_found": "Mierkhat | Page not found"
 }
