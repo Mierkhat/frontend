@@ -1,0 +1,7 @@
+* text=auto
+*.png binary
+*.woff2 binary
+*.tgz binary
+docs/** linguist-documentation
+evidence/** linguist-documentation
+.vendor/** linguist-vendored

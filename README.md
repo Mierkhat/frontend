@@ -1,40 +1,94 @@
 # Mierkhat frontend
 
-React/Vite application, shared copy package and optional review embed. The editorial home, dedicated `/app` workspace, activity, hash recovery, receipts, shared reviews, contracts and help all use live Stellar testnet services. There is no example mode, fabricated balance, mock wallet or intercepted RPC in the acceptance journey.
+[![Verify](https://github.com/Mierkhat/frontend/actions/workflows/verify.yml/badge.svg)](https://github.com/Mierkhat/frontend/actions/workflows/verify.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-From the combined root:
+Mierkhat lets you withdraw DeFindex vault shares and receive one settlement token. You review the shares to spend, the minimum to receive and the fee before signing in Freighter. A Soroban guard redeems the shares and converts the withdrawn assets in one transaction. If a signed condition fails, contract changes roll back; network fees may still be charged.
+
+This repository contains the React application, shared interface copy and optional React review embed. It uses the actual pinned Stellar testnet deployment. Balances, quotes, submissions and receipts come from real services and ledger data. Mainnet is disabled. Testnet tokens have no monetary value.
+
+## Stack
+
+| Component | Technology |
+| --- | --- |
+| Application | TypeScript 7.0.2, React 19.3.1, Vite 8.3.5 |
+| Wallet | Freighter API 6.0.1 |
+| Transaction policy | `@mierkhat/sdk` 0.1.0, built from the backend repository |
+| Interface | CSS, Lucide, local Archivo and Bitter fonts |
+| Verification | Vitest 5.0.5, Playwright 1.64.1 |
+| Toolchain | Node.js 24.22.1, pnpm 12.15.0 |
+
+## Quick start
+
+Install the pinned Node.js version, then:
 
 ```sh
-./scripts/pnpm install --frozen-lockfile
-./scripts/pnpm build
-./scripts/pnpm --filter @mierkhat/backend local
-# In another terminal, serve the tested production frontend:
-./scripts/pnpm --filter @mierkhat/frontend exec vite preview --host 127.0.0.1 --port 5173 --strictPort
+git clone https://github.com/Mierkhat/frontend.git
+cd frontend
+npm install --global pnpm@12.15.0
+pnpm install --frozen-lockfile
+pnpm build
+pnpm dev
 ```
 
-Open `http://localhost:5173`. Install/unlock Freighter and select Stellar testnet. Connect, fund the account using Friendbot, approve the exact token trustlines, receive issued testnet tokens, deposit both vault assets, then redeem shares through the guarded exit. All displayed amounts come from the ledger, a current RPC quote or user input. Fixed faucet allocations are actual issued balances. Testnet assets have no monetary value.
+Open http://localhost:5173. Run the [backend](https://github.com/Mierkhat/backend#quick-start) on `127.0.0.1:3001` in another terminal. Vite forwards `/v1` requests to it. Install and unlock Freighter, select Stellar testnet, then use **Connect wallet** to select it.
 
-For development use `./scripts/pnpm dev`; Vite proxies `/v1` to `127.0.0.1:3001`. Production uses a strict CSP. Only the development transform permits Vite's inline refresh/style injection.
+The workspace guides you through account funding, token trustlines, testnet token issuance, a vault deposit and a guarded withdrawal. The faucet needs the backend's dedicated issuer configuration; it never substitutes fabricated balances when that configuration is missing.
 
-Bundled `src/deployments.json` enables the verified pinned testnet profile explicitly authorized by the user. HTTP discovery cannot enable another profile. Source/profile integration verification does not mean an independent audit is complete. Mainnet remains disabled.
+The exact SDK tarball is committed under `.vendor/` so a fresh clone builds before the SDK has a registry release. `.vendor/manifest.json` records its provenance and checksum. Application and embed use the same archive. The `prebuild` script compiles the copy package and embed first.
 
-`copy/src/en.json` owns authored interface copy. Supplied SVG branding and local licensed Archivo/Bitter fonts remain intact. Light, Dark and System themes, mobile navigation, reduced motion and visible keyboard focus are supported. Public recovery pointers contain hashes, public account identity and action metadata; signed envelopes and wallet secrets never enter browser storage.
-
-Verification:
+## Commands
 
 ```sh
-./scripts/pnpm typecheck
-./scripts/pnpm build
-./scripts/pnpm check:copy
-./scripts/test-browser.sh
+pnpm dev                 # Development server on port 5173
+pnpm build               # Copy package, embed and production app
+pnpm typecheck
+pnpm --filter @mierkhat/copy typecheck
+pnpm --filter @mierkhat/react typecheck
+pnpm test
+pnpm exec vite preview --host 127.0.0.1 --port 5173 --strictPort
 ```
 
-The live browser suite requires the API and public testnet. It checks 320/768/1440 widths in both themes, actual ledger values, keyboard/metadata, hash validation, confirmed receipt lookup, JSON download, filtering and reload. Screenshots go to ignored `test-results/`. It does not intercept network calls.
+Run browser checks with a healthy backend and public testnet access:
 
-Prepare the pinned isolated extension with `python3 frontend/scripts/setup-freighter.py` from the root. Then run `scripts/freighter-onboard.mjs` from the frontend directory using Node24. The helper verifies the official release checksum and creates the isolated test unlock credentials without printing them.
+```sh
+pnpm exec playwright install --with-deps chromium
+pnpm test:e2e
+```
 
-The genuine extension journey is `frontend/scripts/freighter-journey.mjs`, run from the frontend directory with Node 24. It uses the official pinned Freighter release in ignored `.tooling/freighter/unpacked` and a dedicated isolated Chromium profile, never a user browser profile. The ignored credentials file contains only that test wallet's unlock password and must remain mode 0600. `freighter-onboard.mjs` creates that isolated test wallet. Browser libraries must be installed; the root browser wrapper also supports the workstation's ignored extracted libraries. Public approval/receipt evidence is in `contracts/evidence/freighter-journey.json` and screenshots remain local. No private wallet material belongs in source, logs or evidence.
+Playwright builds the app and serves it on port 4173. Its 12 scenarios cover both themes, mobile widths, live ledger reads, navigation, wallet selection, keyboard controls, recovery and receipts. It does not intercept the network. CI runs build, types and unit tests; live browser acceptance is a separate integration check.
 
-The embed displays the exact signed bounds and delegates to the shared SDK controller. Provide a pinned deployment, real wallet adapter, fresh ledger/source sequence, on-chain deployment verification, durable submit, lookup and terminal callbacks. Hosts deduplicate receipt callbacks by hash.
+## Repository layout
 
-For an independent repository use `scripts/export_facet.py frontend <empty-directory>` from the root. It packs the exact SDK and generates a facet lockfile; no unpublished registry package or remote push is required.
+```text
+src/          Pages, wallet adapter, API integration and transaction UI
+copy/         Shared, typed English copy catalog
+embed/        Optional @mierkhat/react review component
+public/       Branding, licensed fonts and static assets
+tests/        Browser checks and public transaction references
+scripts/      Asset generation and genuine Freighter acceptance helpers
+docs/         Architecture, deployment and integration instructions
+.vendor/      Exact SDK archive and provenance
+```
+
+## Documentation
+
+- [Architecture and transaction flow](docs/ARCHITECTURE.md)
+- [Development, deployment and wallet acceptance](docs/OPERATIONS.md)
+- [Copy conventions](docs/COPY.md)
+- [Backend and SDK](https://github.com/Mierkhat/backend)
+- [Contracts and public evidence](https://github.com/Mierkhat/contracts)
+
+The deployment's `reviewed` flag records source/integration verification, not an independent audit. Independent security review and extended restoration/race checks remain [release gates](https://github.com/Mierkhat/contracts/blob/main/docs/RELEASE_STATUS.md).
+
+## Combined workspace
+
+In the original combined workspace, use `./scripts/pnpm --filter @mierkhat/frontend <command>` from its root. Build the workspace before serving the frontend. The export adds the standalone lockfile and SDK archive; neither requires an npm publication.
+
+## Contributing and security
+
+Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request. Report sensitive issues through the [security policy](SECURITY.md).
+
+## License
+
+Mierkhat-authored code uses the [MIT license](LICENSE). Dependencies, upstream protocols, fonts where bundled and brand usage retain the terms described in [third-party notices](THIRD_PARTY_NOTICES.md).

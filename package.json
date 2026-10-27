@@ -28,5 +28,15 @@
     "vitest": "5.0.5",
     "@playwright/test": "1.64.1",
     "sharp": "0.34.5"
-  }
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Mierkhat/frontend.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Mierkhat/frontend/issues"
+  },
+  "homepage": "https://github.com/Mierkhat/frontend#readme",
+  "description": "Stellar testnet vault withdrawals with Freighter, explicit minimums and verified receipts."
 }

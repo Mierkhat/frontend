@@ -25,5 +25,16 @@
   "devDependencies": {
     "typescript": "7.0.2",
     "@types/react": "19.2.2"
-  }
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Mierkhat/frontend.git",
+    "directory": "embed"
+  },
+  "bugs": {
+    "url": "https://github.com/Mierkhat/frontend/issues"
+  },
+  "homepage": "https://github.com/Mierkhat/frontend#readme",
+  "description": "React review component for Mierkhat guarded vault withdrawals."
 }

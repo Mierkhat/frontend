@@ -17,5 +17,16 @@
   },
   "devDependencies": {
     "typescript": "7.0.2"
-  }
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Mierkhat/frontend.git",
+    "directory": "copy"
+  },
+  "bugs": {
+    "url": "https://github.com/Mierkhat/frontend/issues"
+  },
+  "homepage": "https://github.com/Mierkhat/frontend#readme",
+  "description": "Shared typed Mierkhat interface copy."
 }
