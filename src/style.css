@@ -2617,3 +2617,55 @@ svg {
     animation-iteration-count: 1 !important;
   }
 }
+
+.maintenance {
+  font-size: 0.76rem;
+  padding: 0 0 22px;
+  color: var(--muted);
+}
+.maintenance summary {
+  cursor: pointer;
+}
+.maintenance p {
+  max-width: 600px;
+  margin: 15px 0;
+  font-size: 0.78rem;
+  line-height: 1.7;
+}
+.maintenance .button {
+  color: var(--text);
+}
+@media (max-width: 480px) {
+  .portfolio {
+    grid-template-columns: 1fr 1fr;
+  }
+  .portfolio-tokens {
+    grid-column: 1/-1;
+    grid-row: 6;
+    margin-top: 20px;
+  }
+  .portfolio-tokens > div {
+    font-size: 0.74rem;
+    gap: 10px;
+  }
+  .portfolio-tokens > div > span:last-child {
+    max-width: none;
+    white-space: nowrap;
+  }
+  .portfolio h3 {
+    font-size: 0.72rem;
+  }
+  .account-address {
+    grid-column: 2;
+    grid-row: 2/4;
+    align-self: center;
+    margin-top: 0;
+  }
+  .portfolio > .text-button {
+    grid-column: 2;
+    grid-row: 4;
+  }
+  .portfolio > .text-link {
+    grid-row: 7;
+  }
+}

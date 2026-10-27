@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
+import { SubmissionRecovery } from "./components/SubmissionRecovery.js";
+import { useCallback, useEffect, useState, useRef } from "react";
 import {
   ExitController,
   MierkhatError,
@@ -9,6 +10,7 @@ import {
   type NetworkState,
   type Review,
   type RecoveryRecord,
+  type SignedAttempt,
 } from "@mierkhat/sdk";
 import { api, bundles, reader } from "./api.js";
 import { connectWallet, wallet } from "./wallet.js";
@@ -41,6 +43,7 @@ export function App() {
       setNetworkError(undefined);
     } catch (e) {
       setNetworkError(e);
+      setNetwork(undefined);
     }
   }, []);
   useEffect(() => {
@@ -162,7 +165,12 @@ export function App() {
   else if (path === "/help") content = <Help />;
   else if (path.startsWith("/review/"))
     content = (
-      <SharedReview id={path.slice(8)} identity={identity} connect={connect} />
+      <SharedReview
+        key={(identity?.address ?? "") + (identity?.networkPassphrase ?? "")}
+        id={path.slice(8)}
+        identity={identity}
+        connect={connect}
+      />
     );
   else
     content = (
@@ -200,10 +208,19 @@ function SharedReview({
   identity?: WalletIdentity;
   connect: () => Promise<void>;
 }) {
+  const controller = useRef(new ExitController());
+  useEffect(
+    () => () => controller.current.invalidate(),
+    [id, identity?.address, identity?.networkPassphrase],
+  );
   const [review, setReview] = useState<Review>(),
     [error, setError] = useState<unknown>(),
     [confirmed, setConfirmed] = useState(false),
-    [signing, setSigning] = useState(false);
+    [signing, setSigning] = useState(false),
+    [unsent, setUnsent] = useState<{
+      attempt: SignedAttempt;
+      saved: boolean;
+    }>();
   useEffect(() => {
     let active = true;
     void api
@@ -222,7 +239,7 @@ function SharedReview({
     if (!review || !bundle || signing) return;
     setSigning(true);
     try {
-      const c = new ExitController();
+      const c = controller.current;
       c.setDraft(review.draft);
       verifyReview(
         review,
@@ -247,12 +264,20 @@ function SharedReview({
           owner: review.draft.intent.owner,
           createdAt: new Date().toISOString(),
         };
-        if (!rememberPending(record, localStorage))
-          throw new MierkhatError("Storage", "app.storage_before_send");
+        let saved = false;
+        try {
+          saved = rememberPending(record, localStorage);
+        } catch {}
+        if (!saved) {
+          setUnsent({ attempt: a, saved: false });
+          return;
+        }
         try {
           await api.submit(a);
-        } catch {}
-        location.assign("/receipt/" + a.txHash);
+          location.assign("/receipt/" + a.txHash);
+        } catch {
+          setUnsent({ attempt: a, saved: true });
+        }
       }
     } catch (e) {
       setError(e);
@@ -265,7 +290,18 @@ function SharedReview({
       <PageHeading title={t("review.shared")} intro={t("review.share_note")} />
       <ErrorNotice error={error} />
       {!review && !error && <Busy />}
-      {review &&
+      {unsent && (
+        <SubmissionRecovery
+          hash={unsent.attempt.txHash}
+          saved={unsent.saved}
+          retry={async () => {
+            await api.submit(unsent.attempt);
+            location.assign("/receipt/" + unsent.attempt.txHash);
+          }}
+        />
+      )}
+      {!unsent &&
+        review &&
         bundle &&
         (identity?.address === review.draft.intent.owner ? (
           <ReviewPanel

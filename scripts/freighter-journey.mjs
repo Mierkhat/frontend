@@ -1,11 +1,51 @@
 /** Actual Freighter 5.49.0 and public Stellar testnet. No wallet injection or network interception. */
 import { chromium, expect } from "@playwright/test";
 import fs from "node:fs";
+import { spawn } from "node:child_process";
 import path from "node:path";
 const root = path.resolve(".."),
   dir = path.join(root, ".tooling/freighter"),
   extension = path.join(dir, "unpacked"),
   evidencePath = path.join(root, "contracts/evidence/freighter-journey.json");
+let restartNeeded = false;
+async function restartLocalAPI() {
+  if (!restartNeeded) return;
+  await new Promise((r) => setTimeout(r, 3000));
+  const child = spawn(
+    process.execPath,
+    ["--import", "tsx", "scripts/local.ts"],
+    {
+      cwd: path.join(root, "backend"),
+      detached: true,
+      stdio: "ignore",
+      env: {
+        ...process.env,
+        MIERKHAT_TEST_API_OUTAGE: undefined,
+        MIERKHAT_OWNED_API_PID: undefined,
+      },
+    },
+  );
+  child.unref();
+  for (let n = 0; n < 100; n++) {
+    try {
+      if ((await fetch("http://127.0.0.1:3001/v1/health")).ok) {
+        restartNeeded = false;
+        fs.writeFileSync(
+          path.join(root, ".tooling/local/active-api.json"),
+          JSON.stringify({
+            pid: child.pid,
+            port: 3001,
+            command: "node --import tsx scripts/local.ts",
+          }),
+        );
+        console.log("Local API restarted, owner process", child.pid);
+        return;
+      }
+    } catch {}
+    await new Promise((r) => setTimeout(r, 150));
+  }
+  throw Error("Local API restart failed");
+}
 const c = await chromium.launchPersistentContext(path.join(dir, "profile"), {
   headless: true,
   channel: "chromium",
@@ -149,6 +189,24 @@ try {
       app.getByRole("heading", { name: "Your transaction is complete" }),
     ).toBeVisible({ timeout: 45000 });
     console.log("PASS existing real Freighter journey verified by receipt");
+    if (!evidence.operations.restoration) {
+      await open();
+      await app.getByText("Contract maintenance", { exact: true }).click();
+      await app
+        .getByRole("button", {
+          name: "Review contract restoration",
+          exact: true,
+        })
+        .click();
+      await app
+        .getByRole("heading", { name: "Restore this route", exact: true })
+        .waitFor();
+      await sign("restoration");
+      evidence.assertions.explicitRestorationTransactionConfirmed = true;
+      evidence.restorationScope =
+        "Real RestoreFootprint submission for the pinned deployment. Entries were live; an archived-to-live transition is not claimed.";
+      save();
+    }
   } else {
     const fund = app.getByRole("button", {
       name: "Fund account with testnet XLM",
@@ -289,6 +347,119 @@ try {
       "PASS real Freighter signed trustlines, deposit, guarded exit, actual receipt and balance invariants",
     );
   }
+  if (process.env.MIERKHAT_CAPTURE_REVIEW === "1") {
+    await open();
+    await app.getByRole("tab", { name: "Deposit", exact: true }).click();
+    await app.getByLabel("Deposit MKA", { exact: true }).fill("1");
+    await app.getByLabel("Deposit MKB", { exact: true }).fill("1");
+    await app
+      .getByRole("button", { name: "Review deposit", exact: true })
+      .click();
+    await app
+      .getByRole("heading", { name: "Review deposit", exact: true })
+      .waitFor();
+    for (const width of [320, 768, 1440])
+      for (const theme of ["light", "dark"]) {
+        await app.setViewportSize({ width, height: 1000 });
+        await app.emulateMedia({ colorScheme: theme, reducedMotion: "reduce" });
+        await app.waitForTimeout(100);
+        expect(
+          await app.evaluate(
+            () => document.documentElement.scrollWidth <= innerWidth,
+          ),
+        ).toBe(true);
+        await app.screenshot({
+          path: path.join(
+            root,
+            "frontend/artifacts/review-" + width + "-" + theme + ".png",
+          ),
+          fullPage: true,
+        });
+      }
+    console.log(
+      "PASS real prepared deposit review at all six width/theme combinations; no transaction submitted for these screenshots",
+    );
+    await open();
+  }
+  if (process.env.MIERKHAT_TEST_API_OUTAGE === "1") {
+    const pid = Number(process.env.MIERKHAT_OWNED_API_PID);
+    if (!Number.isSafeInteger(pid) || pid <= 1)
+      throw Error("Explicit owned API PID required");
+    await open();
+    await app.getByText("Contract maintenance", { exact: true }).click();
+    await app
+      .getByRole("button", { name: "Review contract restoration", exact: true })
+      .click();
+    await app
+      .getByRole("heading", { name: "Restore this route", exact: true })
+      .waitFor();
+    process.kill(pid, "SIGTERM");
+    restartNeeded = true;
+    await app.getByRole("checkbox").check();
+    const pending = c.waitForEvent("page");
+    await app
+      .getByRole("button", { name: "Sign in Freighter", exact: true })
+      .click();
+    const popup = await pending;
+    await popup.getByRole("button", { name: "Confirm", exact: true }).click();
+    await expect(
+      app.getByRole("button", {
+        name: "Resend the same signed transaction",
+        exact: true,
+      }),
+    ).toBeVisible({ timeout: 60000 });
+    const hash = await app.locator(".storage-recovery code").innerText();
+    const lookup = await (
+      await fetch("https://soroban-testnet.stellar.org", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          jsonrpc: "2.0",
+          id: 1,
+          method: "getTransaction",
+          params: { hash },
+        }),
+      })
+    ).json();
+    expect(lookup.result.status).toBe("NOT_FOUND");
+    evidence.apiOutageRecovery = {
+      hash,
+      signedBytesRetainedInMemory: true,
+      publicHashSavedBeforeSend: true,
+      rpcNotFoundBeforeRetry: true,
+    };
+    save();
+    await app.screenshot({
+      path: path.join(root, ".tooling/redesign/api-outage-recovery.png"),
+      fullPage: true,
+    });
+    await restartLocalAPI();
+    let prompts = 0;
+    const count = (p) => {
+      if (p.url().startsWith("chrome-extension://")) prompts++;
+    };
+    c.on("page", count);
+    await app
+      .getByRole("button", {
+        name: "Resend the same signed transaction",
+        exact: true,
+      })
+      .click();
+    const result = await receipt("outageRecovery");
+    c.off("page", count);
+    expect(result.hash).toBe(hash);
+    expect(prompts).toBe(0);
+    evidence.apiOutageRecovery = {
+      ...evidence.apiOutageRecovery,
+      retriedIdenticalHash: true,
+      noSecondWalletPrompt: true,
+      observation: result,
+    };
+    save();
+    console.log(
+      "PASS genuine API outage retained signed bytes and retried the same hash without another wallet prompt",
+    );
+  }
 } catch (error) {
   console.error(error.message);
   for (const p of c.pages()) {
@@ -305,5 +476,6 @@ try {
   }
   process.exitCode = 1;
 } finally {
+  await restartLocalAPI();
   await c.close();
 }

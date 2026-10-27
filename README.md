@@ -31,6 +31,8 @@ Verification:
 
 The live browser suite requires the API and public testnet. It checks 320/768/1440 widths in both themes, actual ledger values, keyboard/metadata, hash validation, confirmed receipt lookup, JSON download, filtering and reload. Screenshots go to ignored `test-results/`. It does not intercept network calls.
 
+Prepare the pinned isolated extension with `python3 frontend/scripts/setup-freighter.py` from the root. Then run `scripts/freighter-onboard.mjs` from the frontend directory using Node24. The helper verifies the official release checksum and creates the isolated test unlock credentials without printing them.
+
 The genuine extension journey is `frontend/scripts/freighter-journey.mjs`, run from the frontend directory with Node 24. It uses the official pinned Freighter release in ignored `.tooling/freighter/unpacked` and a dedicated isolated Chromium profile, never a user browser profile. The ignored credentials file contains only that test wallet's unlock password and must remain mode 0600. `freighter-onboard.mjs` creates that isolated test wallet. Browser libraries must be installed; the root browser wrapper also supports the workstation's ignored extracted libraries. Public approval/receipt evidence is in `contracts/evidence/freighter-journey.json` and screenshots remain local. No private wallet material belongs in source, logs or evidence.
 
 The embed displays the exact signed bounds and delegates to the shared SDK controller. Provide a pinned deployment, real wallet adapter, fresh ledger/source sequence, on-chain deployment verification, durable submit, lookup and terminal callbacks. Hosts deduplicate receipt callbacks by hash.

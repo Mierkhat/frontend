@@ -353,5 +353,12 @@
   "activity.failed_state": "Failed",
   "receipt.checking_service": "Checking the network result",
   "app.confirm_disconnect": "Disconnect wallet",
-  "input.hash_required": "Enter a 64 character hexadecimal transaction hash."
+  "input.hash_required": "Enter a 64 character hexadecimal transaction hash.",
+  "restore.heading": "Restore this route",
+  "restore.body": "Restore the pinned contracts if the network has archived them. This is a separate transaction with its own fee. It does not withdraw shares or transfer your tokens.",
+  "restore.action": "Review contract restoration",
+  "restore.maintenance": "Contract maintenance",
+  "restore.unavailable": "The network could not prepare restoration. Your assets have not moved.",
+  "restore.scope": "Only the fixed contract instances and code hashes in this deployment may be restored. Prepare a fresh deposit or exit after confirmation.",
+  "activity.kind_restore": "Contract restoration"
 }

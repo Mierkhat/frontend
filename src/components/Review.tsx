@@ -206,18 +206,55 @@ export function SetupPanel({
     return () => clearInterval(timer);
   }, []);
   const stale = now / 1000 - Number(review.preparedTime) > 20,
-    isDeposit = review.draft.kind === "deposit";
+    isDeposit = review.draft.kind === "deposit",
+    isRestore = review.draft.kind === "restore";
   return (
     <section className="review-panel">
       <span className="section-label">
         <ShieldCheck {...icon} />
         {t("review.exact")}
       </span>
-      <h2>{t(isDeposit ? "deposit.review" : "setup.trust_review")}</h2>
+      <h2>
+        {t(
+          isRestore
+            ? "restore.heading"
+            : isDeposit
+              ? "deposit.review"
+              : "setup.trust_review",
+        )}
+      </h2>
       <p className="muted">
-        {t(isDeposit ? "deposit.note" : "setup.trust_body")}
+        {t(
+          isRestore
+            ? "restore.body"
+            : isDeposit
+              ? "deposit.note"
+              : "setup.trust_body",
+        )}
       </p>
-      {isDeposit ? (
+      {isRestore ? (
+        <>
+          <p className="fine-print">{t("restore.scope")}</p>
+          <details className="review-details">
+            <summary>{t("route.contracts")}</summary>
+            <Identity label={t("contracts.guard")} value={bundle.guard} link />
+            <Identity
+              label={t("contracts.vault")}
+              value={bundle.profile.vault.address}
+              link
+            />
+            <Identity
+              label={t("contracts.router")}
+              value={bundle.profile.router.address}
+              link
+            />
+            <Identity
+              label={t("contracts.profile")}
+              value={bundle.profileHash}
+            />
+          </details>
+        </>
+      ) : isDeposit ? (
         <>
           <div className="review-amounts">
             <div>

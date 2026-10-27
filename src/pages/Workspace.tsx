@@ -42,6 +42,7 @@ import {
   icon,
   shorten,
 } from "../components/Shared.js";
+import { SubmissionRecovery } from "../components/SubmissionRecovery.js";
 import { ReviewPanel, SetupPanel } from "../components/Review.js";
 export interface WalletIdentity {
   address: string;
@@ -77,6 +78,7 @@ export function Workspace({
       hash: string;
       send: () => Promise<unknown>;
       record: RecoveryRecord;
+      saved: boolean;
     }>(),
     [balanceLoading, setBalanceLoading] = useState(false);
   const generation = useRef(0),
@@ -165,6 +167,23 @@ export function Workspace({
         setSetup(r);
         setConfirmed(false);
       }
+    });
+  }
+  async function prepareRestore() {
+    invalidate();
+    await work(async () => {
+      const owner = assertAccount(),
+        g = ++generation.current,
+        draft: SetupDraft = {
+          kind: "restore",
+          owner,
+          amountsRaw: [],
+          minimumsRaw: [],
+          trustAssets: [],
+        },
+        r = await api.setupPrepare(draft);
+      verifySetup(r, draft, bundle, await reviewLedger(reader, owner));
+      if (g === generation.current) setSetup(r);
     });
   }
   async function getQuote() {
@@ -277,13 +296,15 @@ export function Workspace({
       saved = rememberPending(record, localStorage);
     } catch {}
     if (!saved) {
-      setUnsent({ hash, send, record });
+      setUnsent({ hash, send, record, saved: false });
       return;
     }
     try {
       await send();
-    } catch {}
-    location.assign("/receipt/" + hash);
+      location.assign("/receipt/" + hash);
+    } catch {
+      setUnsent({ hash, send, record, saved: true });
+    }
   }
   async function sign() {
     if (prompt.current) return;
@@ -466,30 +487,16 @@ export function Workspace({
         <div className="workspace-main">
           <ErrorNotice error={error} />
           {unsent && (
-            <section className="notice storage-recovery">
-              <p>{t("app.storage_before_send")}</p>
-              <Identity label={t("receipt.hash")} value={unsent.hash} />
-              <a
-                href={"/receipt/" + unsent.hash}
-                target="_blank"
-                rel="noreferrer"
-              >
-                {t("pending.recovery_link")}
-              </a>
-              <button
-                className="button"
-                onClick={async () => {
-                  try {
-                    await unsent.send();
-                  } catch {}
-                  location.assign("/receipt/" + unsent.hash);
-                }}
-              >
-                {t("app.storage_continue")}
-              </button>
-            </section>
+            <SubmissionRecovery
+              hash={unsent.hash}
+              saved={unsent.saved}
+              retry={async () => {
+                await unsent.send();
+                location.assign("/receipt/" + unsent.hash);
+              }}
+            />
           )}
-          {!identity ? (
+          {unsent ? null : !identity ? (
             <section className="connect-panel">
               <span className="connect-mark">
                 <Wallet size={36} strokeWidth={1.2} aria-hidden="true" />
@@ -588,6 +595,17 @@ export function Workspace({
                 </div>
                 <p className="fine-print">{t("setup.faucet_note")}</p>
               </section>
+              <details className="maintenance">
+                <summary>{t("restore.maintenance")}</summary>
+                <p>{t("restore.body")}</p>
+                <button
+                  className="button secondary small"
+                  disabled={busy || !account?.funded}
+                  onClick={() => void prepareRestore()}
+                >
+                  {t("restore.action")}
+                </button>
+              </details>
               <div
                 className="action-tabs"
                 role="tablist"
