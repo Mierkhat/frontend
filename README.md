@@ -75,6 +75,7 @@ docs/         Architecture, deployment and integration instructions
 
 - [Architecture and transaction flow](docs/ARCHITECTURE.md)
 - [Development, deployment and wallet acceptance](docs/OPERATIONS.md)
+- [Appearance and palette](docs/APPEARANCE.md)
 - [Copy conventions](docs/COPY.md)
 - [Backend and SDK](https://github.com/Mierkhat/backend)
 - [Contracts and public evidence](https://github.com/Mierkhat/contracts)

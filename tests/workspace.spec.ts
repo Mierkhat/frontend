@@ -16,10 +16,11 @@ for (const width of [320, 768, 1440])
           name: t("home.headline_a") + " " + t("home.headline_b"),
         }),
       ).toBeVisible();
-      await expect(page.locator(".network-ledger")).toHaveText(
-        /Ledger [0-9]+/,
-        { timeout: 45000 },
-      );
+      await expect(page.locator(".live-ledger strong")).toHaveText(/^[0-9]+$/, {
+        timeout: 45000,
+      });
+      await expect(page.locator(".network-strip, .hero-seal")).toHaveCount(0);
+      await expect(page.locator(".hero .kicker")).toHaveCount(0);
       await expect(page.locator(".route-vault strong")).toHaveText(
         /^[0-9]+(?:\.[0-9]+)?$/,
       );

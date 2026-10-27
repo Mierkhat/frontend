@@ -29,7 +29,7 @@ const logo = (
 )
   .replace(/<\?xml[^>]+>/, "")
   .replace("<svg", '<svg x="90" y="110" width="480"');
-const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630"><rect width="1200" height="630" fill="#F5F2E8"/><path d="M70 60h40M70 60v510h40" fill="none" stroke="#143D2C" stroke-width="4"/>${logo}<text x="100" y="425" fill="#14271D" font-family="sans-serif" font-size="58">${catalog["action.review"]}</text></svg>`;
+const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630"><rect width="1200" height="630" fill="#DEDEDE"/><path d="M70 60h40M70 60v510h40" fill="none" stroke="#EB4134" stroke-width="4"/>${logo}<text x="100" y="425" fill="#000000" font-family="sans-serif" font-size="58">${catalog["action.review"]}</text></svg>`;
 await sharp(Buffer.from(svg))
   .png()
   .toFile(new URL("../public/share.png", import.meta.url).pathname);

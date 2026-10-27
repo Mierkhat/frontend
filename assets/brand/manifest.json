@@ -1,6 +1,9 @@
 {
   "owner_supplied": true,
-  "original_colors": ["#0B1B3A", "#FFFFFF"],
+  "original_colors": [
+    "#0B1B3A",
+    "#FFFFFF"
+  ],
   "assets": [
     {
       "file": "assets/brand/original/mierkhat-logo-preview.png",
@@ -44,46 +47,46 @@
       "file": "assets/brand/theme/mierkhat-logo-light.svg",
       "derived_from": "mierkhat-logo.svg",
       "color_mapping": {
-        "#0B1B3A": "#143D2C"
+        "#0B1B3A": "#000000"
       },
-      "sha256": "bbebd74efcfc7be617331dd69f6e97c1d889bc91837d0c9f287955c332cfbf06",
+      "sha256": "9730adcd4a831fc6f920253ddd79b4767fa772a2ba1919a83a6487ef4341625c",
       "geometry_changed": false
     },
     {
       "file": "assets/brand/theme/mierkhat-mark-light.svg",
       "derived_from": "mierkhat-mark.svg",
       "color_mapping": {
-        "#0B1B3A": "#143D2C"
+        "#0B1B3A": "#000000"
       },
-      "sha256": "fed8813e9731f847cb4a94fcf814b6cb3df4f61e293402b8735d03eba8d3069e",
+      "sha256": "36430fbfa749f933f7334a630e75d1dab8b0f14a199d572460e6201ba114f1e1",
       "geometry_changed": false
     },
     {
       "file": "assets/brand/theme/mierkhat-logo-dark.svg",
       "derived_from": "mierkhat-logo-white.svg",
       "color_mapping": {
-        "#FFFFFF": "#F2F0E7"
+        "#FFFFFF": "#DEDEDE"
       },
-      "sha256": "485bf42545c5172ef5347cfcfb182c60d70899ef659f1effccbdb20524f7a1cc",
+      "sha256": "3e1596c923aba90eb39fe64354d46d82849519d22453fd6f4f9c1382f67af33c",
       "geometry_changed": false
     },
     {
       "file": "assets/brand/theme/mierkhat-mark-dark.svg",
       "derived_from": "mierkhat-mark-white.svg",
       "color_mapping": {
-        "#FFFFFF": "#F2F0E7"
+        "#FFFFFF": "#DEDEDE"
       },
-      "sha256": "b95fa8e5af8601c549224783898125146a41971b3ff3ea555e6e340968af0298",
+      "sha256": "9e89305389a584b1dc39fb202d9424234a7e5bd0db377fa188040e2fc24e3f65",
       "geometry_changed": false
     },
     {
       "file": "assets/brand/theme/mierkhat-favicon.svg",
       "derived_from": "mierkhat-icon.svg",
       "color_mapping": {
-        "#0B1B3A": "#143D2C",
-        "#FFFFFF": "#F2F0E7"
+        "#0B1B3A": "#000000",
+        "#FFFFFF": "#EB4134"
       },
-      "sha256": "568a1074e8c7b595b6cfe91e393ed293b704daa924ed7ed1767a96be65f4f8d3",
+      "sha256": "9d9b126a232c8e49a4cbbf759f1fe544b86ffb5039576859dd4256c112156405",
       "geometry_changed": false
     }
   ]

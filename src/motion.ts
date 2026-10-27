@@ -2,7 +2,6 @@ import { useEffect } from "react";
 
 const surfaces = [
   ".hero-main > *",
-  ".hero-seal",
   ".route-visual",
   ".route-story",
   ".section-intro",

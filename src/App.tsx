@@ -58,10 +58,11 @@ export function App() {
     }
   }, []);
   useEffect(() => {
+    if (path !== "/") return;
     void refresh();
     const timer = setInterval(() => void refresh(), 15000);
     return () => clearInterval(timer);
-  }, [refresh]);
+  }, [refresh, path]);
   useEffect(() => {
     let alive = true;
     try {
@@ -251,11 +252,7 @@ export function App() {
     );
   return (
     <>
-      <Header
-        network={network}
-        currentPath={path}
-        unavailable={!!networkError}
-      />
+      <Header currentPath={path} />
       {walletPicker && (
         <WalletDialog
           connecting={connecting}

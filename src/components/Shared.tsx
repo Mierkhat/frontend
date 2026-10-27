@@ -13,7 +13,7 @@ import {
   CircleAlert,
   ChevronDown,
 } from "lucide-react";
-import { MierkhatError, type NetworkState } from "@mierkhat/sdk";
+import { MierkhatError } from "@mierkhat/sdk";
 import { t, type CopyKey } from "../copy.js";
 export const icon = {
   size: 19,
@@ -114,7 +114,7 @@ export function ThemeMenu() {
       document.documentElement.style.colorScheme = theme;
       document
         .querySelector('meta[name="theme-color"]')
-        ?.setAttribute("content", theme === "dark" ? "#101C17" : "#F5F3EB");
+        ?.setAttribute("content", theme === "dark" ? "#000000" : "#DEDEDE");
     };
     update();
     media.addEventListener("change", update);
@@ -246,15 +246,7 @@ export function ThemeMenu() {
     </div>
   );
 }
-export function Header({
-  network,
-  currentPath = "/",
-  unavailable = false,
-}: {
-  network?: NetworkState;
-  currentPath?: string;
-  unavailable?: boolean;
-}) {
+export function Header({ currentPath = "/" }: { currentPath?: string }) {
   const [open, setOpen] = useState(false);
   const toggle = useRef<HTMLButtonElement>(null),
     navigationId = useId();
@@ -330,15 +322,6 @@ export function Header({
           )}
         </nav>
       </header>
-      <div className="network-strip">
-        <span className={network ? "status-dot live" : "status-dot"} />
-        <span>{t("home.network")}</span>
-        <span className="network-ledger">
-          {network
-            ? t("network.live_ledger", { ledger: network.ledger })
-            : t(unavailable ? "common.unavailable" : "common.loading")}
-        </span>
-      </div>
     </>
   );
 }

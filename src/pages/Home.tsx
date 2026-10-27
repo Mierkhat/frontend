@@ -43,10 +43,6 @@ export function Home({
     <main id="main">
       <section className="hero wrap">
         <div className="hero-main">
-          <p className="kicker">
-            <span className="status-dot live" />
-            {t("home.network")}
-          </p>
           <h1>
             {t("home.headline_a")}
             <br />
@@ -59,10 +55,6 @@ export function Home({
               <ArrowUpRight {...icon} />
             </a>
           </div>
-        </div>
-        <div className="hero-seal" aria-hidden="true">
-          <img src="/brand/mierkhat-mark-light.svg" alt="" />
-          <span>{t("app.condition")}</span>
         </div>
       </section>
       <section className="route-band">
@@ -173,7 +165,7 @@ export function Home({
           <div>
             <h2>{t("home.start_title")}</h2>
             <p>{t("home.start_body")}</p>
-            <a className="button citron" href="/app">
+            <a className="button accent" href="/app">
               {t("home.open")}
               <ArrowUpRight {...icon} />
             </a>
