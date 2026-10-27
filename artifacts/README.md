@@ -10,3 +10,5 @@ The home, workspace and prepared deposit images show the current explanatory cop
 - `wallet-picker-dark.png`, `appearance-menu-dark.png` and `wallet-connection-check.json`: actual Freighter detection/approval and the explicitly themed appearance menu.
 
 No network responses or wallet adapter were replaced for these captures. Public account and contract identities are visible; no wallet secret or unlock credential is included.
+
+`redemption-quote-*`, `redemption-review-*` and `redemption-output-check.json` capture actual unsigned quotes/reviews for the dual-asset vault's MKOUT, MKA and MKB routes. The selected wallet output is prominent; internal MKA/MKB legs are collapsed and explicitly described. The check retains both withdrawal/swap minimum vectors, verifies the selected profile/token and submits no funds.

@@ -91,7 +91,12 @@ export function MierkhatReview(props: MierkhatReviewProps) {
   return (
     <section aria-label={t("action.review")}>
       <h2>{t("action.review")}</h2>
+      <p>{t("redemption.only_output", { token: token.symbol })}</p>
       <dl>
+        <dt>{t("redemption.output")}</dt>
+        <dd>{token.symbol}</dd>
+        <dt>{t("contracts.asset")}</dt>
+        <dd>{token.address}</dd>
         <dt>{t("action.shares")}</dt>
         <dd>{formatAmount(props.draft.intent.shares, bundle.shareDecimals)}</dd>
         <dt>{t("action.minimum")}</dt>
@@ -114,19 +119,50 @@ export function MierkhatReview(props: MierkhatReviewProps) {
         <dd>
           {t("app.expiry_time", { time: props.draft.intent.valid_before_time })}
         </dd>
-        {bundle.profile.assets.map((asset, n) => (
-          <div key={asset.asset}>
-            <dt>{asset.asset}</dt>
-            <dd>
-              {t("review.withdraw_minima")}:{" "}
-              {props.draft.intent.min_withdraw[n]} {t("app.amount_raw")}
-            </dd>
-            <dd>
-              {t("review.swap_minima")}: {props.draft.intent.min_swap[n]}{" "}
-              {t("app.amount_raw")}
-            </dd>
-          </div>
-        ))}
+        <dt>{t("redemption.internal_details")}</dt>
+        <dd>{t("redemption.internal_note", { token: token.symbol })}</dd>
+        {bundle.profile.assets.map((asset, n) => {
+          const underlying = bundle.tokens.find(
+            (candidate) => candidate.address === asset.asset,
+          )!;
+          return (
+            <div key={asset.asset}>
+              <dt>
+                {asset.asset === token.address
+                  ? t("redemption.direct_leg", { token: token.symbol })
+                  : t("redemption.swap_leg", {
+                      from: underlying.symbol,
+                      to: token.symbol,
+                    })}
+              </dt>
+              <dd>
+                <code>{asset.asset}</code>
+              </dd>
+              <dd>
+                {t("review.withdraw_minima")}:{" "}
+                {formatAmount(
+                  props.draft.intent.min_withdraw[n]!,
+                  underlying.decimals,
+                )}{" "}
+                {underlying.symbol}
+              </dd>
+              <dd>
+                {asset.asset === token.address ? (
+                  t("review.no_swap")
+                ) : (
+                  <>
+                    {t("redemption.swap_minimum", { token: token.symbol })}:{" "}
+                    {formatAmount(
+                      props.draft.intent.min_swap[n]!,
+                      token.decimals,
+                    )}{" "}
+                    {token.symbol}
+                  </>
+                )}
+              </dd>
+            </div>
+          );
+        })}
         {review && (
           <>
             <dt>{t("action.expected")}</dt>

@@ -51,6 +51,7 @@ import {
 } from "../components/Shared.js";
 import { SubmissionRecovery } from "../components/SubmissionRecovery.js";
 import { ReviewPanel, SetupPanel } from "../components/Review.js";
+import { RedemptionOutput } from "../components/RedemptionOutput.js";
 export interface WalletIdentity {
   address: string;
   networkPassphrase: string;
@@ -883,44 +884,65 @@ export function Workspace({
                             {t("exit.quote_time", { ledger: quote.ledger })}
                           </span>
                         </div>
-                        {bundle.profile.assets.map((a, i) => {
-                          const token = bundle.tokens.find(
-                            (t) => t.address === a.asset,
-                          )!;
-                          return (
-                            <div className="quote-route" key={a.asset}>
-                              <span>
-                                <b>
-                                  {formatAmount(
-                                    quote.withdrawnRaw[i]!,
-                                    token.decimals,
+                        <RedemptionOutput bundle={bundle} />
+                        <details className="internal-quote-details">
+                          <summary>{t("redemption.internal_details")}</summary>
+                          <p className="internal-route-note">
+                            {t("redemption.internal_note", {
+                              token: settlement.symbol,
+                            })}
+                          </p>
+                          <div className="quote-columns">
+                            <span>{t("redemption.from_vault")}</span>
+                            <span>
+                              {t("redemption.contribution", {
+                                token: settlement.symbol,
+                              })}
+                            </span>
+                          </div>
+                          {bundle.profile.assets.map((a, i) => {
+                            const token = bundle.tokens.find(
+                              (t) => t.address === a.asset,
+                            )!;
+                            return (
+                              <div className="quote-route" key={a.asset}>
+                                <span>
+                                  <b>
+                                    {formatAmount(
+                                      quote.withdrawnRaw[i]!,
+                                      token.decimals,
+                                    )}
+                                  </b>{" "}
+                                  {token.symbol}
+                                </span>
+                                <ChevronRight {...icon} />
+                                <span>
+                                  {a.asset === settlement.address ? (
+                                    t("exit.direct_output", {
+                                      token: settlement.symbol,
+                                    })
+                                  ) : (
+                                    <>
+                                      <b>
+                                        {formatAmount(
+                                          quote.swappedRaw[i]!,
+                                          settlement.decimals,
+                                        )}
+                                      </b>{" "}
+                                      {settlement.symbol}
+                                    </>
                                   )}
-                                </b>{" "}
-                                {token.symbol}
-                              </span>
-                              <ChevronRight {...icon} />
-                              <span>
-                                {a.asset === settlement.address ? (
-                                  t("exit.direct_output", {
-                                    token: settlement.symbol,
-                                  })
-                                ) : (
-                                  <>
-                                    <b>
-                                      {formatAmount(
-                                        quote.swappedRaw[i]!,
-                                        settlement.decimals,
-                                      )}
-                                    </b>{" "}
-                                    {settlement.symbol}
-                                  </>
-                                )}
-                              </span>
-                            </div>
-                          );
-                        })}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </details>
                         <div className="quote-total">
-                          <span>{t("exit.expected")}</span>
+                          <span>
+                            {t("redemption.estimated_wallet", {
+                              token: settlement.symbol,
+                            })}
+                          </span>
                           <strong>
                             {formatAmount(
                               quote.receiveRaw,

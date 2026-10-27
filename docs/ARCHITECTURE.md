@@ -29,3 +29,7 @@ Sections reveal once as they enter view, including newly mounted review panels. 
 `PositionsWorkspace` owns the vault/output choice and live position reads. `Workspace` owns one route's editor, keyed by deployment epoch; account reads, setup and quote construction include that epoch. The SDK verifies the corresponding immutable profile before approval. A route is selected from locally pinned enabled bundles; server discovery cannot authorize arbitrary contracts.
 
 Receipt token labels, decimals and downloads resolve the bundle by the verified receipt's profile hash. Shared reviews select their bundle from the actual review epoch/profile. For hashes without a local or backend record, direct lookup uses the actual guard invocation to choose among trusted profiles, then verifies the full receipt. Historical confirmation without return metadata still cannot invent a guard receipt.
+
+## Internal redemption versus wallet payment
+
+The quote and signing review lead with the single selected wallet-output token. Internal vault withdrawals can contain multiple underlying assets even when the wallet receives one token. Their amounts live in an initially collapsed, explicitly labelled redemption/swap section; each review leg names its source and selected destination, and direct returns are labelled separately. The final minimum remains denominated only in the selected token. The React embed uses the same distinction while retaining exact token identities and per-leg limits. No asset arrays or signed conditions are removed to simplify the display.

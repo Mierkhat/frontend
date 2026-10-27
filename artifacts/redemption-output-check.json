@@ -1,0 +1,57 @@
+{
+  "checkedAt": "2026-10-27T22:54:35.175Z",
+  "network": "Test SDF Network ; September 2015",
+  "genuineFreighter": true,
+  "submissions": 0,
+  "routes": [
+    {
+      "epoch": "integration-fixture-v1",
+      "profileHash": "34e6e0678f5f12715481a18137d811a7b4c58f65509de2bfeeeb284e1c2217ce",
+      "selectedToken": "MKOUT",
+      "selectedTokenAddress": "CDARIATHAO4DTSGHZDQQQRH7HUO6O2DOOVOCVYIIL4DXVFG3GXN6VTDR",
+      "sharesRaw": "161272",
+      "minimumRaw": "151765",
+      "ledger": 5423614,
+      "assertions": {
+        "quoteAndReviewShowOnlySelectedWalletOutput": true,
+        "internalLegsExplicitAndCollapsedInitially": true,
+        "finalMinimumUsesSelectedToken": true,
+        "bothLegConditionsRetained": true,
+        "fitsMobileAndDesktop": true
+      }
+    },
+    {
+      "epoch": "positions-dual-mka-v1",
+      "profileHash": "24c9ae09590df80f59754482dda5938e7d78c455ec72ae2a5d4c9a4c439408b5",
+      "selectedToken": "MKA",
+      "selectedTokenAddress": "CCECTMZ4PJIIHUVCUTGFVOBNJ5WA5JQSCTHJIQCXILMU2WKYWGFNJ45G",
+      "sharesRaw": "161272",
+      "minimumRaw": "155979",
+      "ledger": 5423618,
+      "assertions": {
+        "quoteAndReviewShowOnlySelectedWalletOutput": true,
+        "internalLegsExplicitAndCollapsedInitially": true,
+        "finalMinimumUsesSelectedToken": true,
+        "bothLegConditionsRetained": true,
+        "fitsMobileAndDesktop": true
+      }
+    },
+    {
+      "epoch": "positions-dual-mkb-v1",
+      "profileHash": "92c88838eb6c3c0100ebae8d3dfa919af3f43d5cbaa593a3de2b9077cf89d4d8",
+      "selectedToken": "MKB",
+      "selectedTokenAddress": "CBNVWZ5GBPOEISLJDBIVZS5MQASTX3ZK773CGXYBB2KN42GY2YS3JL5W",
+      "sharesRaw": "161272",
+      "minimumRaw": "164692",
+      "ledger": 5423624,
+      "assertions": {
+        "quoteAndReviewShowOnlySelectedWalletOutput": true,
+        "internalLegsExplicitAndCollapsedInitially": true,
+        "finalMinimumUsesSelectedToken": true,
+        "bothLegConditionsRetained": true,
+        "fitsMobileAndDesktop": true
+      }
+    }
+  ],
+  "owner": "GAKBD3QFS4XCFEJJRCBO6BIKMZA7DUKYXA27JKS5QMDCE3UEIQCZFX2I"
+}

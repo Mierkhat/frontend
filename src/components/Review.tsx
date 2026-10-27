@@ -8,6 +8,7 @@ import {
 } from "@mierkhat/sdk";
 import { t } from "../copy.js";
 import { Busy, Identity, icon } from "./Shared.js";
+import { RedemptionOutput } from "./RedemptionOutput.js";
 function useReviewHeading(digest: string) {
   const heading = useRef<HTMLHeadingElement>(null);
   useEffect(() => {
@@ -60,6 +61,7 @@ export function ReviewPanel({
       <h2 ref={heading} tabIndex={-1}>
         {t("review.heading")}
       </h2>
+      <RedemptionOutput bundle={bundle} />
       <p className="muted">{t("review.intro")}</p>
       <div className="review-amounts">
         <div>
@@ -103,38 +105,50 @@ export function ReviewPanel({
         </div>
       </dl>
       <details className="review-details">
-        <summary>{t("app.required_minima")}</summary>
+        <summary>{t("redemption.internal_details")}</summary>
+        <p className="internal-route-note">
+          {t("redemption.internal_note", { token: token.symbol })}
+        </p>
         {bundle.profile.assets.map((a, n) => {
           const asset = bundle.tokens.find((t) => t.address === a.asset)!;
           return (
-            <dl className="review-facts" key={a.asset}>
-              <div>
-                <dt>{t("review.withdraw_minima")}</dt>
-                <dd>
-                  {formatAmount(
-                    review.draft.intent.min_withdraw[n]!,
-                    asset.decimals,
-                  )}{" "}
-                  {asset.symbol}
-                </dd>
-              </div>
-              <div>
-                <dt>{t("review.swap_minima")}</dt>
-                <dd>
-                  {a.asset === token.address ? (
-                    t("review.no_swap")
-                  ) : (
-                    <>
+            <div className="internal-route-leg" key={a.asset}>
+              <h3>
+                {a.asset === token.address
+                  ? t("redemption.direct_leg", { token: token.symbol })
+                  : t("redemption.swap_leg", {
+                      from: asset.symbol,
+                      to: token.symbol,
+                    })}
+              </h3>
+              <dl className="review-facts">
+                <div>
+                  <dt>{t("review.withdraw_minima")}</dt>
+                  <dd>
+                    {formatAmount(
+                      review.draft.intent.min_withdraw[n]!,
+                      asset.decimals,
+                    )}{" "}
+                    {asset.symbol}
+                  </dd>
+                </div>
+                {a.asset !== token.address && (
+                  <div>
+                    <dt>
+                      {t("redemption.swap_minimum", { token: token.symbol })}
+                    </dt>
+                    <dd>
                       {formatAmount(
                         review.draft.intent.min_swap[n]!,
                         token.decimals,
                       )}{" "}
                       {token.symbol}
-                    </>
-                  )}
-                </dd>
-              </div>
-            </dl>
+                    </dd>
+                  </div>
+                )}
+              </dl>
+              {a.asset === token.address && <p>{t("review.no_swap")}</p>}
+            </div>
           );
         })}
       </details>
