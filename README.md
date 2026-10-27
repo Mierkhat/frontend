@@ -56,7 +56,7 @@ pnpm exec playwright install --with-deps chromium
 pnpm test:e2e
 ```
 
-Playwright builds the app and serves it on port 4173. Its 12 scenarios cover both themes, mobile widths, live ledger reads, navigation, wallet selection, keyboard controls, recovery and receipts. It does not intercept the network. CI runs build, types and unit tests; live browser acceptance is a separate integration check.
+Playwright builds the app and serves it on port 4173. Its 14 scenarios cover both themes, mobile widths, live ledger reads, navigation, wallet selection, keyboard controls, recovery and receipts. It does not intercept the network. CI runs build, types and unit tests; live browser acceptance is a separate integration check.
 
 ## Repository layout
 

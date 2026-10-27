@@ -45,7 +45,7 @@ export function ErrorNotice({ error }: { error: unknown }) {
 }
 export function Busy() {
   return (
-    <span className="busy">
+    <span className="busy" role="status">
       <LoaderCircle {...icon} />
       {t("common.checking")}
     </span>
@@ -256,6 +256,18 @@ export function Header({
   unavailable?: boolean;
 }) {
   const [open, setOpen] = useState(false);
+  const toggle = useRef<HTMLButtonElement>(null),
+    navigationId = useId();
+  useEffect(() => {
+    if (!open) return;
+    const escape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape" || event.defaultPrevented) return;
+      setOpen(false);
+      toggle.current?.focus();
+    };
+    document.addEventListener("keydown", escape);
+    return () => document.removeEventListener("keydown", escape);
+  }, [open]);
   return (
     <>
       <a className="skip" href="#main">
@@ -275,14 +287,17 @@ export function Header({
           />
         </a>
         <button
+          ref={toggle}
           className="nav-toggle"
           aria-label={t(open ? "nav.close" : "nav.menu")}
           aria-expanded={open}
+          aria-controls={navigationId}
           onClick={() => setOpen(!open)}
         >
           {open ? <X {...icon} /> : <Menu {...icon} />}
         </button>
         <nav
+          id={navigationId}
           className={open ? "nav open" : "nav"}
           aria-label={t("app.window_menu")}
         >

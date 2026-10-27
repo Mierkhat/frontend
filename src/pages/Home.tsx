@@ -108,7 +108,7 @@ export function Home({
                       <span>
                         {amount
                           ? formatAmount(amount, token.decimals)
-                          : t("common.loading")}
+                          : t(error ? "common.unavailable" : "common.loading")}
                       </span>
                     </div>
                   </div>
@@ -139,7 +139,10 @@ export function Home({
             <div className="live-ledger">
               <span className="status-dot live" />
               <span>{t("home.ledger")}</span>
-              <strong>{network?.ledger ?? t("common.loading")}</strong>
+              <strong>
+                {network?.ledger ??
+                  t(error ? "common.unavailable" : "common.loading")}
+              </strong>
             </div>
           </div>
         </div>

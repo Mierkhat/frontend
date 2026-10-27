@@ -17,3 +17,7 @@ The guard redeems and swaps withdrawn assets in one invocation. The quote is an 
 Exact signed bytes stay in browser memory for retry and are encrypted in the backend after admission. Browser storage contains only validated public recovery pointers, never envelopes, private keys or seeds. Reload uses public hashes. An uncertain result is not called a failure. Historical transaction success alone does not establish a decoded guard receipt without committed metadata.
 
 `copy/` owns typed interpolation; `embed/` provides the React review component. The standalone `.vendor/` SDK archive is shared by both app and embed. Update its provenance, both dependency references and lockfile together.
+
+## Motion and keyboard behavior
+
+Sections reveal once as they enter view, including newly mounted review panels. The Web Animations API affects surfaces rather than counting or replacing financial values. Content stays visible when animation/observer support is unavailable. Focusing a moving region cancels its reveal immediately; changing the OS reduced-motion preference cancels active motion. Reduced-motion CSS removes spinner, dialog, menu and feedback animation entirely. Menus/dialogs use short entrance transitions; receipt checks animate only when confirmed. Mobile navigation closes with Escape and restores toggle focus. Transaction tabs expose linked tab/panel roles, roving focus and Arrow/Home/End keyboard selection.

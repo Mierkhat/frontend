@@ -263,3 +263,77 @@ test("fits the wallet dialog and themed appearance menu on a narrow screen", asy
     ),
   ).toBe(true);
 });
+
+test("reveals sections once, keeps focused content visible and stops motion when the preference changes", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await page.goto("/");
+  await page.evaluate(() => {
+    const target = document.querySelector(".condition-list details")!;
+    window.scrollTo({
+      top: target.getBoundingClientRect().top + scrollY - 160,
+      behavior: "instant",
+    });
+  });
+  const condition = page.locator(".condition-list details").first();
+  await expect
+    .poll(() =>
+      condition.evaluate(
+        (el) =>
+          el.getAnimations().filter((a) => a.playState === "running").length,
+      ),
+    )
+    .toBeGreaterThan(0);
+  const summary = condition.locator("summary");
+  await summary.focus();
+  await expect(summary).toBeFocused();
+  await expect
+    .poll(() => condition.evaluate((el) => el.getAnimations().length))
+    .toBe(0);
+  await summary.press("Enter");
+  await expect(condition.locator("p")).toBeVisible();
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          document.getAnimations().filter((a) => a.playState === "running")
+            .length,
+      ),
+    )
+    .toBe(0);
+  await page.goto("/app");
+  await page
+    .getByRole("button", { name: t("wallet.connect"), exact: true })
+    .first()
+    .click();
+  await expect(page.getByRole("dialog")).toBeVisible();
+  expect(
+    await page
+      .getByRole("dialog")
+      .evaluate((el) => getComputedStyle(el).animationName),
+  ).toBe("none");
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
+});
+
+test("closes mobile navigation with Escape and returns focus to its toggle", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.goto("/help");
+  const toggle = page.getByRole("button", { name: t("nav.menu"), exact: true });
+  await toggle.click();
+  await page
+    .getByRole("navigation")
+    .getByRole("link", { name: t("nav.activity"), exact: true })
+    .focus();
+  await page.keyboard.press("Escape");
+  await expect(toggle).toBeFocused();
+  await expect(toggle).toHaveAttribute("aria-expanded", "false");
+});

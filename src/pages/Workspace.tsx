@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import {
   ArrowUpRight,
   Check,
@@ -59,6 +59,7 @@ export function Workspace({
   connect: () => Promise<void>;
   disconnect: () => void;
 }) {
+  const editorId = useId();
   const [account, setAccount] = useState<AccountState>(),
     [mode, setMode] = useState<"exit" | "deposit">("exit"),
     [shares, setShares] = useState(""),
@@ -610,9 +611,42 @@ export function Workspace({
                 className="action-tabs"
                 role="tablist"
                 aria-label={t("workspace.heading")}
+                onKeyDown={(event) => {
+                  if (
+                    busy ||
+                    !["ArrowLeft", "ArrowRight", "Home", "End"].includes(
+                      event.key,
+                    )
+                  )
+                    return;
+                  const tabs = [
+                    ...event.currentTarget.querySelectorAll<HTMLButtonElement>(
+                      '[role="tab"]',
+                    ),
+                  ];
+                  const current = tabs.indexOf(
+                    document.activeElement as HTMLButtonElement,
+                  );
+                  if (current < 0) return;
+                  event.preventDefault();
+                  const next =
+                    event.key === "Home"
+                      ? 0
+                      : event.key === "End"
+                        ? tabs.length - 1
+                        : (current +
+                            (event.key === "ArrowRight" ? 1 : -1) +
+                            tabs.length) %
+                          tabs.length;
+                  tabs[next]?.focus();
+                  tabs[next]?.click();
+                }}
               >
                 <button
                   role="tab"
+                  id={editorId + "-exit"}
+                  aria-controls={editorId}
+                  tabIndex={mode === "exit" ? 0 : -1}
                   aria-selected={mode === "exit"}
                   onClick={() => changeMode("exit")}
                   disabled={busy}
@@ -621,6 +655,9 @@ export function Workspace({
                 </button>
                 <button
                   role="tab"
+                  id={editorId + "-deposit"}
+                  aria-controls={editorId}
+                  tabIndex={mode === "deposit" ? 0 : -1}
                   aria-selected={mode === "deposit"}
                   onClick={() => changeMode("deposit")}
                   disabled={busy}
@@ -628,7 +665,14 @@ export function Workspace({
                   {t("workspace.deposit")}
                 </button>
               </div>
-              <section className="action-editor">
+              <section
+                key={mode}
+                className="action-editor"
+                id={editorId}
+                role="tabpanel"
+                aria-labelledby={editorId + "-" + mode}
+                tabIndex={0}
+              >
                 <h2>
                   {t(mode === "exit" ? "exit.heading" : "deposit.heading")}
                 </h2>

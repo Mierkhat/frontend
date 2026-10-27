@@ -16,6 +16,7 @@ import {
 import { api, bundles, reader } from "./api.js";
 import { connectWallet, wallet } from "./wallet.js";
 import { t } from "./copy.js";
+import { usePageMotion } from "./motion.js";
 import {
   Header,
   Footer,
@@ -42,6 +43,7 @@ export function App() {
   const connectionGeneration = useRef(0),
     connectionRequest = useRef<Promise<WalletIdentity> | undefined>(undefined);
   const path = location.pathname;
+  usePageMotion(path);
   useEffect(() => {
     if (path === "/" && location.hash === "#conditions")
       document.getElementById("conditions")?.scrollIntoView({ block: "start" });
