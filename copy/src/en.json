@@ -360,5 +360,6 @@
   "restore.maintenance": "Contract maintenance",
   "restore.unavailable": "The network could not prepare restoration. Your assets have not moved.",
   "restore.scope": "Only the fixed contract instances and code hashes in this deployment may be restored. Prepare a fresh deposit or exit after confirmation.",
-  "activity.kind_restore": "Contract restoration"
+  "activity.kind_restore": "Contract restoration",
+  "receipt.keep_open": "Keep this page open until the retry is acknowledged. The signed transaction is held in memory."
 }

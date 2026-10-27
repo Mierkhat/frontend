@@ -400,7 +400,7 @@ export function Workspace({
         {identity ? (
           <button
             className="button secondary"
-            disabled={busy || signing}
+            disabled={busy || signing || !!unsent}
             onClick={disconnect}
           >
             <Wallet {...icon} />
