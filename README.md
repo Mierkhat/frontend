@@ -1,25 +1,38 @@
 # Mierkhat frontend
 
-Vite and React transaction workspace plus `copy/` and optional `embed/` packages. Supplied brand originals, color derivatives, Archivo/Bitter fonts and OFL licenses are included. Browser state retains public transaction pointers, never signed XDR.
+React/Vite application, shared copy package and optional review embed. The editorial home, dedicated `/app` workspace, activity, hash recovery, receipts, shared reviews, contracts and help all use live Stellar testnet services. There is no example mode, fabricated balance, mock wallet or intercepted RPC in the acceptance journey.
 
-From the combined root, run `./scripts/pnpm build`, then `./scripts/pnpm dev`. Vite serves port 5173 and proxies `/v1` to the backend on port 3001. The SDK and copy packages must be built first.
+From the combined root:
 
-The bundled `src/deployments.json` contains a disabled testnet proof profile for read-only receipt verification, with no signing enabled. The example is visibly labeled and cannot sign. An API response cannot enable an unbundled profile. After review, bundle the exact verified deployment record here and in the service registry; mainnet remains disabled by the SDK. Freighter must be installed and on the supported testnet account model.
+```sh
+./scripts/pnpm install --frozen-lockfile
+./scripts/pnpm build
+./scripts/pnpm --filter @mierkhat/backend local
+# In another terminal, serve the tested production frontend:
+./scripts/pnpm --filter @mierkhat/frontend exec vite preview --host 127.0.0.1 --port 5173 --strictPort
+```
 
-Verification from the combined root:
+Open `http://localhost:5173`. Install/unlock Freighter and select Stellar testnet. Connect, fund the account using Friendbot, approve the exact token trustlines, receive issued testnet tokens, deposit both vault assets, then redeem shares through the guarded exit. All displayed amounts come from the ledger, a current RPC quote or user input. Fixed faucet allocations are actual issued balances. Testnet assets have no monetary value.
+
+For development use `./scripts/pnpm dev`; Vite proxies `/v1` to `127.0.0.1:3001`. Production uses a strict CSP. Only the development transform permits Vite's inline refresh/style injection.
+
+Bundled `src/deployments.json` enables the verified pinned testnet profile explicitly authorized by the user. HTTP discovery cannot enable another profile. Source/profile integration verification does not mean an independent audit is complete. Mainnet remains disabled.
+
+`copy/src/en.json` owns authored interface copy. Supplied SVG branding and local licensed Archivo/Bitter fonts remain intact. Light, Dark and System themes, mobile navigation, reduced motion and visible keyboard focus are supported. Public recovery pointers contain hashes, public account identity and action metadata; signed envelopes and wallet secrets never enter browser storage.
+
+Verification:
 
 ```sh
 ./scripts/pnpm typecheck
 ./scripts/pnpm build
 ./scripts/pnpm check:copy
-./scripts/pnpm --filter @mierkhat/frontend exec playwright install chromium
 ./scripts/test-browser.sh
 ```
 
-Playwright needs Chromium's system libraries. On this workstation, missing nspr/nss/alsa libraries were extracted into ignored `.tooling/browser-libs` without a system installation. A standard Linux CI image can use `playwright install --with-deps chromium`. Screenshots at 320, 768 and 1440 pixels are in `artifacts/`; both themes, example reviews, keyboard use, reduced motion, denied storage, shared review rejection and unknown status after reload are tested. Real extension UI signing and manual screen reader review remain release checks.
+The live browser suite requires the API and public testnet. It checks 320/768/1440 widths in both themes, actual ledger values, keyboard/metadata, hash validation, confirmed receipt lookup, JSON download, filtering and reload. Screenshots go to ignored `test-results/`. It does not intercept network calls.
 
-Generate icons and share image with `pnpm exec node scripts/assets.mjs` inside this facet. `copy/src/en.json` is the canonical implementation catalog. `assets/brand/manifest.json` retains original source attribution and checksums.
+The genuine extension journey is `frontend/scripts/freighter-journey.mjs`, run from the frontend directory with Node 24. It uses the official pinned Freighter release in ignored `.tooling/freighter/unpacked` and a dedicated isolated Chromium profile, never a user browser profile. The ignored credentials file contains only that test wallet's unlock password and must remain mode 0600. `freighter-onboard.mjs` creates that isolated test wallet. Browser libraries must be installed; the root browser wrapper also supports the workstation's ignored extracted libraries. Public approval/receipt evidence is in `contracts/evidence/freighter-journey.json` and screenshots remain local. No private wallet material belongs in source, logs or evidence.
 
-The embed renders bound amounts, recipient, contracts, per-asset minima, both validity limits and fee. Supply pinned deployment, wallet, preparation, fresh ledger plus source sequence, live deployment verification, submit, lookup and terminal callbacks. Hosts deduplicate receipt callbacks by hash. A compromised host shares the browser trust boundary.
+The embed displays the exact signed bounds and delegates to the shared SDK controller. Provide a pinned deployment, real wallet adapter, fresh ledger/source sequence, on-chain deployment verification, durable submit, lookup and terminal callbacks. Hosts deduplicate receipt callbacks by hash.
 
-For a standalone repository, use the root `scripts/export_facet.py frontend <empty-directory>`. It includes the exact packed SDK so no unpublished registry package is required, resolves the internal copy/embed workspace and creates a facet lockfile. After SDK publication, replace its file tarball dependency with the same exact SDK version. No remote or push is created by export.
+For an independent repository use `scripts/export_facet.py frontend <empty-directory>` from the root. It packs the exact SDK and generates a facet lockfile; no unpublished registry package or remote push is required.

@@ -1,0 +1,33 @@
+{
+  "source": "contracts/evidence/testnet-journey.json",
+  "network": "Test SDF Network ; September 2015",
+  "owner": "GDLAZY5STEPNQRWLO2YNA4HQCIJX7AXHSFXY5IDNFWXKFMKZ6IPX762E",
+  "operations": {
+    "exit": {
+      "hash": "c2c0daa727beb8ae74e8a14abea6ad124da2f2ee23905cb4e337cc6ce6ba608e",
+      "state": "succeeded",
+      "ledger": 5413948,
+      "receipt": {
+        "owner": "GDLAZY5STEPNQRWLO2YNA4HQCIJX7AXHSFXY5IDNFWXKFMKZ6IPX762E",
+        "ledger": 5413948,
+        "intentId": "1f3884db5f64e56696bf433e0024beee4560f7398d355f9cbfd380688ff56315",
+        "received": "487489096",
+        "timestamp": "1793093327",
+        "withdrawn": [
+          "250000000",
+          "250000000"
+        ],
+        "intentHash": "e50342a35b60ee801aa02b227662485a474eb02907abd2779cab13e8d0377ad6",
+        "swappedOut": [
+          "243744548",
+          "243744548"
+        ],
+        "profileHash": "34e6e0678f5f12715481a18137d811a7b4c58f65509de2bfeeeb284e1c2217ce",
+        "sharesSpent": "500000000"
+      },
+      "actualFee": "55724",
+      "rawStatus": "SUCCESS",
+      "observedAt": "2026-10-27T09:28:50.196Z"
+    }
+  }
+}
