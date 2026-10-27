@@ -37,6 +37,10 @@ export function App() {
     [error, setError] = useState<unknown>(),
     [connecting, setConnecting] = useState(false);
   const path = location.pathname;
+  useEffect(() => {
+    if (path === "/" && location.hash === "#conditions")
+      document.getElementById("conditions")?.scrollIntoView({ block: "start" });
+  }, [path]);
   const refresh = useCallback(async () => {
     try {
       setNetwork(await api.network());

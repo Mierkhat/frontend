@@ -131,6 +131,11 @@ test("supports keyboard navigation and correct metadata without enabling an unkn
   expect(
     await page.locator('meta[property="og:title"]').getAttribute("content"),
   ).toBe("Mierkhat | Make your move");
+  await page.goto("/contracts");
+  await page.getByRole("link", { name: "The conditions", exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: "Less hoping. More knowing." }),
+  ).toBeInViewport();
   await page.goto("/review/00000000-0000-4000-8000-000000000000");
   await expect(page.getByRole("alert")).toBeVisible({ timeout: 20000 });
   await expect(
