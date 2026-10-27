@@ -1,0 +1,28 @@
+{
+  "checkedAt": "2026-10-27T16:38:47.147Z",
+  "genuineFreighter": true,
+  "actualTestnet": true,
+  "withdrawalSubmissions": 0,
+  "owner": "GAKBD3QFS4XCFEJJRCBO6BIKMZA7DUKYXA27JKS5QMDCE3UEIQCZFX2I",
+  "sharesRaw": "9899999",
+  "prepareRequests": 1,
+  "quoteRequests": 2,
+  "assertions": {
+    "staleQuoteRefreshed": true,
+    "chosenMinimumPreserved": true,
+    "exactlyOneReviewPrepared": true,
+    "reviewHeadingFocusedAndVisible": true,
+    "noWithdrawalSubmitted": true,
+    "noInjectedWallet": true,
+    "noNetworkInterception": true,
+    "minimumAboveQuoteExplainedInFocusedVisibleError": true,
+    "rejectedMinimumNotLowered": true
+  },
+  "prerequisiteDepositHash": "5789fba2ca54ca90ab21541850df9115620affc4ca910510d3cfbe50b25c70b6",
+  "originalReproduction": {
+    "quoteWaitSeconds": 24,
+    "prepareRequests": 0,
+    "quoteExpiryErrorOutsideViewport": true
+  },
+  "verificationQuoteWaitSeconds": 24
+}

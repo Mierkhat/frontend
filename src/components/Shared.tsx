@@ -21,7 +21,19 @@ export const icon = {
   "aria-hidden": true as const,
 };
 export const shorten = (s: string) => s.slice(0, 7) + "…" + s.slice(-7);
-export function ErrorNotice({ error }: { error: unknown }) {
+export function ErrorNotice({
+  error,
+  focusRequest = 0,
+}: {
+  error: unknown;
+  focusRequest?: number;
+}) {
+  const notice = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!focusRequest || !notice.current) return;
+    notice.current.focus({ preventScroll: true });
+    notice.current.scrollIntoView({ block: "nearest", behavior: "instant" });
+  }, [focusRequest]);
   if (!error) return null;
   const key =
     error instanceof MierkhatError ? error.copyKey : "service.unavailable";
@@ -32,7 +44,7 @@ export function ErrorNotice({ error }: { error: unknown }) {
     message = t("service.unavailable");
   }
   return (
-    <div className="notice error" role="alert">
+    <div className="notice error" role="alert" ref={notice} tabIndex={-1}>
       <CircleAlert {...icon} />
       <div>
         <p>{message}</p>
@@ -43,11 +55,11 @@ export function ErrorNotice({ error }: { error: unknown }) {
     </div>
   );
 }
-export function Busy() {
+export function Busy({ label }: { label?: string } = {}) {
   return (
     <span className="busy" role="status">
       <LoaderCircle {...icon} />
-      {t("common.checking")}
+      {label ?? t("common.checking")}
     </span>
   );
 }

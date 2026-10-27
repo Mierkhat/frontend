@@ -74,6 +74,10 @@ export function Workspace({
     [busy, setBusy] = useState(false),
     [signing, setSigning] = useState(false),
     [error, setError] = useState<unknown>(),
+    [errorFocusRequest, setErrorFocusRequest] = useState(0),
+    [withdrawalStage, setWithdrawalStage] = useState<
+      "refreshing" | "preparing"
+    >("preparing"),
     [confirmed, setConfirmed] = useState(false),
     [unsent, setUnsent] = useState<{
       hash: string;
@@ -140,6 +144,7 @@ export function Workspace({
       await fn();
     } catch (e) {
       setError(e);
+      setErrorFocusRequest((request) => request + 1);
     } finally {
       setBusy(false);
     }
@@ -239,14 +244,24 @@ export function Workspace({
         if (g === generation.current) setSetup(r);
         return;
       }
-      if (
-        !quote ||
-        quote.sharesRaw !== parseAmount(shares, bundle.shareDecimals) ||
-        Date.now() / 1000 - Number(quote.timestamp) > 20
-      )
-        throw new MierkhatError("QuoteExpired", "exit.quote_expired");
-      const min = parseAmount(minimum, settlement.decimals);
-      if (BigInt(min) > BigInt(quote.receiveRaw))
+      const rawShares = parseAmount(shares, bundle.shareDecimals),
+        min = parseAmount(minimum, settlement.decimals);
+      if (BigInt(rawShares) > BigInt(account?.sharesRaw ?? "0"))
+        throw new MierkhatError("Balance", "exit.balance");
+      if (!quote || quote.sharesRaw !== rawShares)
+        throw new MierkhatError("QuoteRequired", "exit.empty");
+      let currentQuote = quote;
+      if (Date.now() / 1000 - Number(currentQuote.timestamp) > 20) {
+        setWithdrawalStage("refreshing");
+        currentQuote = await api.quote(owner, rawShares);
+        if (g !== generation.current) return;
+        if (currentQuote.sharesRaw !== rawShares)
+          throw new MierkhatError("QuoteMismatch", "route.unsupported");
+        // A fresh estimate must never lower the minimum the user chose.
+        setQuote(currentQuote);
+      }
+      setWithdrawalStage("preparing");
+      if (BigInt(min) > BigInt(currentQuote.receiveRaw))
         throw new MierkhatError("Minimum", "exit.high_minimum");
       const l = await latestLedger(reader),
         floor = (v: string) => {
@@ -263,9 +278,9 @@ export function Workspace({
           profile_hash: bundle.profileHash,
           owner,
           recipient: owner,
-          shares: quote.sharesRaw,
-          min_withdraw: quote.withdrawnRaw.map(floor),
-          min_swap: quote.swappedRaw.map((v, i) =>
+          shares: rawShares,
+          min_withdraw: currentQuote.withdrawnRaw.map(floor),
+          min_swap: currentQuote.swappedRaw.map((v, i) =>
             bundle.profile.assets[i]!.asset === bundle.profile.settlement
               ? "0"
               : floor(v),
@@ -275,6 +290,7 @@ export function Workspace({
           valid_before_ledger: l.sequence + 36,
         },
       });
+      if (g !== generation.current) return;
       controller.current.setDraft(d);
       const r = await controller.current.prepare(async (draft) =>
         verifyReview(
@@ -486,7 +502,7 @@ export function Workspace({
           </a>
         </aside>
         <div className="workspace-main">
-          <ErrorNotice error={error} />
+          <ErrorNotice error={error} focusRequest={errorFocusRequest} />
           {unsent && (
             <SubmissionRecovery
               hash={unsent.hash}
@@ -900,7 +916,17 @@ export function Workspace({
                           onClick={() => void prepare()}
                           disabled={busy || !minimum}
                         >
-                          {busy ? <Busy /> : t("action.review")}
+                          {busy ? (
+                            <Busy
+                              label={t(
+                                withdrawalStage === "refreshing"
+                                  ? "exit.refreshing_quote"
+                                  : "exit.preparing_review",
+                              )}
+                            />
+                          ) : (
+                            t("action.review")
+                          )}
                           <ArrowUpRight {...icon} />
                         </button>
                       </div>

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ArrowUpRight, ShieldCheck, Clock, Share2 } from "lucide-react";
 import {
   formatAmount,
@@ -8,6 +8,14 @@ import {
 } from "@mierkhat/sdk";
 import { t } from "../copy.js";
 import { Busy, Identity, icon } from "./Shared.js";
+function useReviewHeading(digest: string) {
+  const heading = useRef<HTMLHeadingElement>(null);
+  useEffect(() => {
+    heading.current?.focus({ preventScroll: true });
+    heading.current?.scrollIntoView({ block: "start", behavior: "instant" });
+  }, [digest]);
+  return heading;
+}
 export function ReviewPanel({
   review,
   bundle,
@@ -26,6 +34,7 @@ export function ReviewPanel({
   onConfirm: () => void;
   changed?: boolean;
 }) {
+  const heading = useReviewHeading(review.envelopeDigest);
   const [now, setNow] = useState(Date.now());
   useEffect(() => {
     const timer = setInterval(() => setNow(Date.now()), 1000);
@@ -48,7 +57,9 @@ export function ReviewPanel({
           {t("review.age", { ledger: review.preparedLedger })}
         </span>
       </div>
-      <h2>{t("review.heading")}</h2>
+      <h2 ref={heading} tabIndex={-1}>
+        {t("review.heading")}
+      </h2>
       <p className="muted">{t("review.intro")}</p>
       <div className="review-amounts">
         <div>
@@ -200,6 +211,7 @@ export function SetupPanel({
   confirmed: boolean;
   onConfirm: () => void;
 }) {
+  const heading = useReviewHeading(review.envelopeDigest);
   const [now, setNow] = useState(Date.now());
   useEffect(() => {
     const timer = setInterval(() => setNow(Date.now()), 1000);
@@ -214,7 +226,7 @@ export function SetupPanel({
         <ShieldCheck {...icon} />
         {t("review.exact")}
       </span>
-      <h2>
+      <h2 ref={heading} tabIndex={-1}>
         {t(
           isRestore
             ? "restore.heading"

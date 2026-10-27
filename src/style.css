@@ -111,6 +111,11 @@ summary:focus-visible {
   outline: 3px solid var(--focus);
   outline-offset: 5px;
 }
+.review-panel h2:focus-visible,
+.notice[tabindex]:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 5px;
+}
 a,
 button {
   touch-action: manipulation;

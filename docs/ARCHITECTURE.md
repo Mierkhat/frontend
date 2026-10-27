@@ -10,6 +10,8 @@ Connect opens an accessible selector before calling Freighter, the implemented p
 
 The user enters shares, obtains a quote, chooses a minimum and reviews the exact transaction. The SDK verifies deployment pins, source, arguments, nested transfers, bounds, fees and wallet identity before signing. Setup has separate policies for trustlines, deposits and restoration. A restoration cannot be silently appended to an exit. `ExitController` invalidates stale work when account, network, epoch or review changes.
 
+Reviewing refreshes a quote older than twenty seconds while preserving the exact share quantity and the minimum the user entered. If the new estimate cannot meet that minimum, a focused, visible error explains the issue; it never lowers the minimum automatically. A completed review receives keyboard focus and scrolls into view. Action errors receive the same treatment, while background balance checks do not move focus.
+
 The guard redeems and swaps withdrawn assets in one invocation. The quote is an estimate; the signed minimum is an on-chain condition. A failed condition reverses contract changes but may consume network fees.
 
 ## Recovery and shared packages

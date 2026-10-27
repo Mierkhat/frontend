@@ -382,5 +382,7 @@
   "help.atomic": "Why put the withdrawal and swaps together?",
   "help.atomic_body": "Separate transactions can complete independently. A withdrawal could succeed before a later swap fails. Mierkhat runs its supported withdrawal and swaps in one transaction, then checks the final amount received. A failed check reverses that transaction's asset changes, though Stellar can still charge a fee.",
   "title.contracts": "Mierkhat | Contracts and token addresses",
-  "title.not_found": "Mierkhat | Page not found"
+  "title.not_found": "Mierkhat | Page not found",
+  "exit.refreshing_quote": "Updating the withdrawal quote",
+  "exit.preparing_review": "Preparing the withdrawal review"
 }
