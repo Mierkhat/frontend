@@ -7,7 +7,7 @@ import path from "node:path";
 const expect = baseExpect.configure({ timeout: 60000 });
 const root = path.resolve(".."),
   dir = path.join(root, ".tooling/freighter");
-const registry = JSON.parse(fs.readFileSync("src/deployments.json", "utf8"));
+const registry = JSON.parse(fs.readFileSync("src/deployments.json", "utf8")).filter(b=>!b.migration);
 const original = registry[0];
 const routes = registry.filter(
   (route) => route.profile.vault.address === original.profile.vault.address,

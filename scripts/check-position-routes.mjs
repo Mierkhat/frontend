@@ -8,7 +8,7 @@ import path from "node:path";
 const expect = baseExpect.configure({ timeout: 90000 });
 const root = path.resolve(".."),
   dir = path.join(root, ".tooling/freighter");
-const registry = JSON.parse(fs.readFileSync("src/deployments.json", "utf8"));
+const registry = JSON.parse(fs.readFileSync("src/deployments.json", "utf8")).filter(b=>!b.migration);
 const evidencePath = path.join(
   root,
   "contracts/evidence/freighter-position-routes.json",

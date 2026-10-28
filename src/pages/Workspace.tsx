@@ -51,6 +51,8 @@ import {
 } from "../components/Shared.js";
 import { SubmissionRecovery } from "../components/SubmissionRecovery.js";
 import { ReviewPanel, SetupPanel } from "../components/Review.js";
+import { WithdrawalReadiness } from "../components/WithdrawalReadiness.js";
+import { WatchButton } from "../components/Watches.js";
 import { RedemptionOutput } from "../components/RedemptionOutput.js";
 export interface WalletIdentity {
   address: string;
@@ -78,6 +80,8 @@ export function Workspace({
   const editorId = useId();
   const [account, setAccount] = useState<AccountState>(),
     [shares, setShares] = useState(""),
+    [sizeMode, setSizeMode] = useState<"shares" | "target">("shares"),
+    [target, setTarget] = useState(""),
     [amounts, setAmounts] = useState<string[]>(
       bundle.profile.assets.map(() => ""),
     ),
@@ -102,6 +106,9 @@ export function Workspace({
     }>(),
     [balanceLoading, setBalanceLoading] = useState(false);
   const busyRef = useRef(false);
+  const watched = useRef<{ sharesRaw: string; minimumRaw: string } | undefined>(
+    undefined,
+  );
   const generation = useRef(0),
     controller = useRef(new ExitController()),
     prompt = useRef(false);
@@ -144,6 +151,29 @@ export function Workspace({
       if (pending) location.replace("/receipt/" + pending.hash);
     } catch {}
   }, []);
+  useEffect(() => {
+    try {
+      const d = JSON.parse(
+        sessionStorage.getItem("mierkhat.watchReview") ?? "null",
+      );
+      if (
+        d?.owner === owner &&
+        d?.epoch === bundle.epoch &&
+        d.kind === "exit"
+      ) {
+        setShares(formatAmount(d.shares_raw, bundle.shareDecimals));
+        rawAmount(d.minimum_raw);
+        watched.current = {
+          sharesRaw: d.shares_raw,
+          minimumRaw: d.minimum_raw,
+        };
+        setMinimum(formatAmount(d.minimum_raw, settlement.decimals));
+        if ([10, 50, 100].includes(d.movement_bps))
+          setMovement(String(d.movement_bps));
+        sessionStorage.removeItem("mierkhat.watchReview");
+      }
+    } catch {}
+  }, [owner, bundle.epoch]);
   function invalidate() {
     generation.current++;
     controller.current.invalidate();
@@ -229,10 +259,27 @@ export function Workspace({
       setQuote(q);
       setMinimum(
         formatAmount(
-          (BigInt(q.receiveRaw) * (10000n - BigInt(movement))) / 10000n + "",
+          watched.current?.sharesRaw === raw
+            ? watched.current.minimumRaw
+            : (BigInt(q.receiveRaw) * (10000n - BigInt(movement))) / 10000n +
+                "",
           settlement.decimals,
         ),
       );
+    });
+  }
+  async function getTargetPlan() {
+    invalidate();
+    setQuote(undefined);
+    await work(async () => {
+      const owner = assertAccount(),
+        g = generation.current;
+      const raw = parseAmount(target, settlement.decimals);
+      const plan = await api.plan(owner, bundle.epoch, raw, Number(movement));
+      if (g !== generation.current) return;
+      setShares(formatAmount(plan.quote.sharesRaw, bundle.shareDecimals));
+      setQuote(plan.quote);
+      setMinimum(formatAmount(raw, settlement.decimals));
     });
   }
   async function prepare() {
@@ -530,6 +577,18 @@ export function Workspace({
         </aside>
         <div className="workspace-main">
           {selection}
+          {owner && mode === "exit" && !displayReview && !unsent && (
+            <WithdrawalReadiness
+              owner={owner}
+              bundle={bundle}
+              onUse={(raw) => {
+                invalidate();
+                setQuote(undefined);
+                setSizeMode("shares");
+                setShares(formatAmount(raw, bundle.shareDecimals));
+              }}
+            />
+          )}
           <ErrorNotice error={error} focusRequest={errorFocusRequest} />
           {unsent && (
             <SubmissionRecovery
@@ -800,53 +859,93 @@ export function Workspace({
                   </>
                 ) : (
                   <>
-                    <div className="amount-field">
-                      <span>
-                        {t("action.shares")}
-                        <button
-                          type="button"
-                          className="text-button"
-                          disabled={!account?.sharesRaw || busy}
-                          onClick={(e) => {
-                            e.preventDefault();
-                            invalidate();
-                            setQuote(undefined);
-                            setShares(
-                              formatAmount(
-                                account!.sharesRaw!,
-                                bundle.shareDecimals,
-                              ),
-                            );
-                          }}
-                        >
-                          {t("action.max")}
-                        </button>
-                      </span>
-                      <div>
-                        <input
-                          inputMode="decimal"
-                          autoComplete="off"
-                          value={shares}
-                          disabled={!ready || busy}
-                          onChange={(e) => {
-                            invalidate();
-                            setShares(e.target.value);
-                            setQuote(undefined);
-                          }}
-                          aria-label={t("action.shares")}
-                        />
-                        <b>{t("app.shares_unit")}</b>
-                      </div>
-                      <small>
-                        {t("action.available")}{" "}
-                        {account?.sharesRaw
-                          ? formatAmount(
-                              account.sharesRaw,
-                              bundle.shareDecimals,
-                            )
-                          : t("common.unknown")}
-                      </small>
-                    </div>
+                    <label className="movement-field">
+                      <span>{t("plan.mode")}</span>
+                      <select
+                        value={sizeMode}
+                        disabled={busy}
+                        onChange={(e) => {
+                          invalidate();
+                          setQuote(undefined);
+                          setSizeMode(e.target.value as "shares" | "target");
+                        }}
+                      >
+                        <option value="shares">{t("plan.shares")}</option>
+                        <option value="target">{t("plan.receive")}</option>
+                      </select>
+                    </label>
+                    {sizeMode === "shares" ? (
+                      <>
+                        <div className="amount-field">
+                          <span>
+                            {t("action.shares")}
+                            <button
+                              type="button"
+                              className="text-button"
+                              disabled={!account?.sharesRaw || busy}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                invalidate();
+                                setQuote(undefined);
+                                setShares(
+                                  formatAmount(
+                                    account!.sharesRaw!,
+                                    bundle.shareDecimals,
+                                  ),
+                                );
+                              }}
+                            >
+                              {t("action.max")}
+                            </button>
+                          </span>
+                          <div>
+                            <input
+                              inputMode="decimal"
+                              autoComplete="off"
+                              value={shares}
+                              disabled={!ready || busy}
+                              onChange={(e) => {
+                                invalidate();
+                                setShares(e.target.value);
+                                setQuote(undefined);
+                              }}
+                              aria-label={t("action.shares")}
+                            />
+                            <b>{t("app.shares_unit")}</b>
+                          </div>
+                          <small>
+                            {t("action.available")}{" "}
+                            {account?.sharesRaw
+                              ? formatAmount(
+                                  account.sharesRaw,
+                                  bundle.shareDecimals,
+                                )
+                              : t("common.unknown")}
+                          </small>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <p>{t("plan.intro")}</p>
+                        <label className="amount-field">
+                          <span>{t("plan.target")}</span>
+                          <div>
+                            <input
+                              inputMode="decimal"
+                              aria-label={t("plan.target")}
+                              value={target}
+                              disabled={!ready || busy}
+                              onChange={(e) => {
+                                invalidate();
+                                setQuote(undefined);
+                                setTarget(e.target.value);
+                              }}
+                            />
+                            <b>{settlement.symbol}</b>
+                          </div>
+                        </label>
+                      </>
+                    )}
                     <label className="movement-field">
                       <span>{t("exit.slippage")}</span>
                       <select
@@ -866,10 +965,22 @@ export function Workspace({
                     <p className="fine-print">{t("exit.slippage_note")}</p>
                     <button
                       className="button secondary"
-                      disabled={!ready || busy || !shares}
-                      onClick={() => void getQuote()}
+                      disabled={
+                        !ready ||
+                        busy ||
+                        !(sizeMode === "shares" ? shares : target)
+                      }
+                      onClick={() =>
+                        void (sizeMode === "shares"
+                          ? getQuote()
+                          : getTargetPlan())
+                      }
                     >
-                      {busy ? <Busy /> : t("exit.quote")}
+                      {busy ? (
+                        <Busy />
+                      ) : (
+                        t(sizeMode === "shares" ? "exit.quote" : "plan.action")
+                      )}
                       <RefreshCw {...icon} />
                     </button>
                     {account?.sharesRaw === "0" && (
@@ -877,6 +988,17 @@ export function Workspace({
                     )}
                     {quote && (
                       <div className="live-quote">
+                        {sizeMode === "target" && (
+                          <p>
+                            {t("plan.result", {
+                              amount: formatAmount(
+                                quote.sharesRaw,
+                                bundle.shareDecimals,
+                              ),
+                            })}{" "}
+                            {t("plan.note")}
+                          </p>
+                        )}
                         <div className="quote-heading">
                           <ShieldCheck {...icon} />
                           <h3>{t("exit.route")}</h3>
@@ -885,6 +1007,20 @@ export function Workspace({
                           </span>
                         </div>
                         <RedemptionOutput bundle={bundle} />
+                        <WatchButton
+                          owner={owner!}
+                          bundle={bundle}
+                          shares={quote.sharesRaw}
+                          minimum={(() => {
+                            try {
+                              return parseAmount(minimum, settlement.decimals);
+                            } catch {
+                              return "";
+                            }
+                          })()}
+                          movementBps={Number(movement)}
+                          kind="exit"
+                        />
                         <details className="internal-quote-details">
                           <summary>{t("redemption.internal_details")}</summary>
                           <p className="internal-route-note">
@@ -962,7 +1098,7 @@ export function Workspace({
                                 invalidate();
                                 setMinimum(e.target.value);
                               }}
-                              disabled={busy}
+                              disabled={busy || sizeMode === "target"}
                               aria-label={t("action.minimum")}
                             />
                             <b>{settlement.symbol}</b>

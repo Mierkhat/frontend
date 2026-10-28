@@ -14,6 +14,13 @@ export function Contracts({ bundle }: { bundle: DeploymentBundle }) {
             value={bundle.profile.vault.address}
             link
           />
+          {bundle.migration && (
+            <Identity
+              label={t("migration.destination")}
+              value={bundle.migration.destination.address}
+              link
+            />
+          )}
           <Identity
             label={t("contracts.router")}
             value={bundle.profile.router.address}

@@ -22,7 +22,11 @@ export function PositionsWorkspace({
   const routes = bundles.filter(
     (b) => b.networkPassphrase === initial.networkPassphrase,
   );
-  const [epoch, setEpoch] = useState(initial.epoch),
+  const [epoch, setEpoch] = useState(
+      routes.find(
+        (b) => b.epoch === new URLSearchParams(location.search).get("epoch"),
+      )?.epoch ?? initial.epoch,
+    ),
     [mode, setMode] = useState<"exit" | "deposit">("exit"),
     [positions, setPositions] = useState<PositionsState>(),
     [error, setError] = useState<unknown>(),

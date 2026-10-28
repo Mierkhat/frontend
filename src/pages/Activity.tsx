@@ -320,10 +320,19 @@ export function ReceiptPage({
             <ShieldCheck size={32} aria-hidden="true" />
           </span>
           <div>
-            <span>{t("success.received")}</span>
+            <span>
+              {t(receipt.migration ? "migration.received" : "success.received")}
+            </span>
             <strong>
-              {formatAmount(receipt.received, token.decimals)}
-              <small>{token.symbol}</small>
+              {receipt.migration && bundle.migration
+                ? formatAmount(
+                    receipt.migration.destinationShares,
+                    bundle.migration.destinationShareDecimals,
+                  )
+                : formatAmount(receipt.received, token.decimals)}
+              <small>
+                {receipt.migration ? t("app.shares_unit") : token.symbol}
+              </small>
             </strong>
           </div>
         </section>

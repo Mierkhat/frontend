@@ -14,16 +14,24 @@ import {
   type ExitQuote,
   type SetupDraft,
   type SetupReview,
+  type WithdrawalReadiness,
+  type WithdrawalPlan,
+  type MigrationQuote,
 } from "@mierkhat/sdk";
 import pinned from "./deployments.json" with { type: "json" };
 export const knownDeployments: DeploymentBundle[] = pinned.map((b) =>
   bundleSchema.parse(b),
 );
-export const bundles = knownDeployments.filter((b) => b.enabled);
+export const migrationBundles = knownDeployments.filter(
+  (b) => b.enabled && !!b.migration,
+);
+export const bundles = knownDeployments.filter(
+  (b) => b.enabled && !b.migration,
+);
 export const reader = new rpc.Server("https://soroban-testnet.stellar.org", {
   timeout: 12000,
 });
-async function request<T>(
+export async function request<T>(
   path: string,
   body?: unknown,
   headers?: Record<string, string>,
@@ -48,6 +56,32 @@ async function request<T>(
   return r.json() as Promise<T>;
 }
 export const api = {
+  readiness: (owner: string, epoch: string) =>
+    request<WithdrawalReadiness>("/withdrawals/readiness", { owner, epoch }),
+  plan: (
+    owner: string,
+    epoch: string,
+    targetRaw: string,
+    movementBps: number,
+  ) =>
+    request<WithdrawalPlan>("/withdrawals/plan", {
+      owner,
+      epoch,
+      targetRaw,
+      movementBps,
+    }),
+  migrationQuote: (
+    owner: string,
+    epoch: string,
+    sharesRaw: string,
+    movementBps: number,
+  ) =>
+    request<MigrationQuote>("/migrations/quote", {
+      owner,
+      epoch,
+      sharesRaw,
+      movementBps,
+    }),
   network: () => request<NetworkState>("/network"),
   account: (owner: string, epoch?: string) =>
     request<AccountState>(

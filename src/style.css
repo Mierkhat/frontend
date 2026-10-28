@@ -1752,7 +1752,7 @@ svg {
     gap: 35px;
   }
 }
-@media (max-width: 800px) {
+@media (max-width: 1050px) {
   .site-header {
     padding: 20px 0 16px;
   }
@@ -1782,6 +1782,8 @@ svg {
   .nav .theme-control {
     padding: 8px 0;
   }
+}
+@media (max-width: 800px) {
   .hero {
     padding-top: 40px;
     padding-bottom: 65px;

@@ -44,9 +44,13 @@ export function MierkhatReview(props: MierkhatReviewProps) {
   const token = bundle.tokens.find(
     (t) => t.address === bundle.profile.settlement,
   )!;
+  const migration = bundle.migration,
+    bounds = props.draft.intent.migration;
+  const currentMinimum =
+    bounds?.min_destination_shares ?? props.draft.intent.min_receive;
   const lowered =
     lastMinimum.current !== undefined &&
-    BigInt(props.draft.intent.min_receive) < lastMinimum.current;
+    BigInt(currentMinimum) < lastMinimum.current;
   useEffect(() => {
     controller.current.setDraft(props.draft);
     setReview(undefined);
@@ -91,18 +95,25 @@ export function MierkhatReview(props: MierkhatReviewProps) {
   return (
     <section aria-label={t("action.review")}>
       <h2>{t("action.review")}</h2>
-      <p>{t("redemption.only_output", { token: token.symbol })}</p>
+      <p>
+        {migration
+          ? t("migration.notices")
+          : t("redemption.only_output", { token: token.symbol })}
+      </p>
       <dl>
-        <dt>{t("redemption.output")}</dt>
-        <dd>{token.symbol}</dd>
+        <dt>{t(migration ? "migration.destination" : "redemption.output")}</dt>
+        <dd>{migration ? migration.destinationName : token.symbol}</dd>
         <dt>{t("contracts.asset")}</dt>
-        <dd>{token.address}</dd>
+        <dd>{migration ? migration.destination.address : token.address}</dd>
         <dt>{t("action.shares")}</dt>
         <dd>{formatAmount(props.draft.intent.shares, bundle.shareDecimals)}</dd>
-        <dt>{t("action.minimum")}</dt>
+        <dt>{t(migration ? "migration.minimum" : "action.minimum")}</dt>
         <dd>
-          {formatAmount(props.draft.intent.min_receive, token.decimals)}{" "}
-          {token.symbol}
+          {formatAmount(
+            currentMinimum,
+            migration ? migration.destinationShareDecimals : token.decimals,
+          )}{" "}
+          {migration ? t("app.shares_unit") : token.symbol}
         </dd>
         <dt>{t("action.recipient")}</dt>
         <dd>{props.draft.intent.recipient}</dd>
@@ -110,6 +121,13 @@ export function MierkhatReview(props: MierkhatReviewProps) {
         <dd>{bundle.guard}</dd>
         <dd>{bundle.profile.vault.address}</dd>
         <dd>{bundle.profile.router.address}</dd>
+        {migration && (
+          <>
+            <dd>{migration.destination.address}</dd>
+            <dt>{t("migration.guarantee")}</dt>
+            <dd>{t("migration.refund_note")}</dd>
+          </>
+        )}
         <dt>{t("review.expiry")}</dt>
         <dd>
           {t("app.expiry_ledger", {
@@ -120,7 +138,11 @@ export function MierkhatReview(props: MierkhatReviewProps) {
           {t("app.expiry_time", { time: props.draft.intent.valid_before_time })}
         </dd>
         <dt>{t("redemption.internal_details")}</dt>
-        <dd>{t("redemption.internal_note", { token: token.symbol })}</dd>
+        <dd>
+          {t(migration ? "migration.settlement" : "redemption.internal_note", {
+            token: token.symbol,
+          })}
+        </dd>
         {bundle.profile.assets.map((asset, n) => {
           const underlying = bundle.tokens.find(
             (candidate) => candidate.address === asset.asset,
@@ -167,8 +189,13 @@ export function MierkhatReview(props: MierkhatReviewProps) {
           <>
             <dt>{t("action.expected")}</dt>
             <dd>
-              {formatAmount(review.expectedReceiveRaw, token.decimals)}{" "}
-              {token.symbol}
+              {formatAmount(
+                migration
+                  ? review.expectedDestinationSharesRaw!
+                  : review.expectedReceiveRaw,
+                migration ? migration.destinationShareDecimals : token.decimals,
+              )}{" "}
+              {migration ? t("app.shares_unit") : token.symbol}
             </dd>
             <dt>{t("fee.maximum")}</dt>
             <dd>{formatAmount(review.feeMaximumStroops, 7)} XLM</dd>
@@ -257,7 +284,8 @@ export function MierkhatReview(props: MierkhatReviewProps) {
                 setReview(candidate);
                 setStatus("review");
                 lastMinimum.current = BigInt(
-                  candidate.draft.intent.min_receive,
+                  candidate.draft.intent.migration?.min_destination_shares ??
+                    candidate.draft.intent.min_receive,
                 );
               }
             } else {

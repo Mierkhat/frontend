@@ -305,6 +305,24 @@ export function Header({ currentPath = "/" }: { currentPath?: string }) {
           className={open ? "nav open" : "nav"}
           aria-label={t("app.window_menu")}
         >
+          <a
+            href="/withdrawals"
+            aria-current={currentPath === "/withdrawals" ? "page" : undefined}
+          >
+            {t("nav.withdrawals")}
+          </a>
+          <a
+            href="/migrate"
+            aria-current={currentPath === "/migrate" ? "page" : undefined}
+          >
+            {t("nav.migrate")}
+          </a>
+          <a
+            href="/alerts"
+            aria-current={currentPath === "/alerts" ? "page" : undefined}
+          >
+            {t("nav.alerts")}
+          </a>
           <a href="/#conditions" onClick={() => setOpen(false)}>
             {t("nav.conditions")}
           </a>
@@ -313,12 +331,6 @@ export function Header({ currentPath = "/" }: { currentPath?: string }) {
             aria-current={currentPath === "/activity" ? "page" : undefined}
           >
             {t("nav.activity")}
-          </a>
-          <a
-            href="/contracts"
-            aria-current={currentPath === "/contracts" ? "page" : undefined}
-          >
-            {t("nav.contracts")}
           </a>
           <ThemeMenu />
           {currentPath === "/app" ? (

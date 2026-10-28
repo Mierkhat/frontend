@@ -24,10 +24,13 @@ import {
   PageHeading,
   Busy,
 } from "./components/Shared.js";
+import { MigrationReviewPanel } from "./components/MigrationReview.js";
 import { ReviewPanel } from "./components/Review.js";
 import { Home } from "./pages/Home.js";
 import { type WalletIdentity } from "./pages/Workspace.js";
 import { PositionsWorkspace } from "./pages/PositionsWorkspace.js";
+import { WithdrawalTools, Alerts } from "./pages/WithdrawalTools.js";
+import { Migration } from "./pages/Migration.js";
 import { Activity, ReceiptPage } from "./pages/Activity.js";
 import { Contracts, Help } from "./pages/Information.js";
 export { ReviewPanel } from "./components/Review.js";
@@ -176,21 +179,27 @@ export function App() {
   }
   useEffect(() => {
     document.title = t(
-      path === "/app"
-        ? "title.workspace"
-        : path.startsWith("/review/")
-          ? "title.review"
-          : path.startsWith("/receipt/")
-            ? "title.receipt"
-            : path === "/activity"
-              ? "title.activity"
-              : path === "/help"
-                ? "title.help"
-                : path === "/contracts"
-                  ? "title.contracts"
-                  : path === "/"
-                    ? "title.home"
-                    : "title.not_found",
+      path === "/withdrawals"
+        ? "title.withdrawals"
+        : path === "/migrate"
+          ? "title.migrate"
+          : path === "/alerts"
+            ? "title.alerts"
+            : path === "/app"
+              ? "title.workspace"
+              : path.startsWith("/review/")
+                ? "title.review"
+                : path.startsWith("/receipt/")
+                  ? "title.receipt"
+                  : path === "/activity"
+                    ? "title.activity"
+                    : path === "/help"
+                      ? "title.help"
+                      : path === "/contracts"
+                        ? "title.contracts"
+                        : path === "/"
+                          ? "title.home"
+                          : "title.not_found",
     );
     document
       .querySelector('meta[property="og:title"]')
@@ -203,6 +212,11 @@ export function App() {
         <h1>{t("app.no_deployment")}</h1>
       </main>
     );
+  else if (path === "/withdrawals")
+    content = <WithdrawalTools connectedOwner={identity?.address} />;
+  else if (path === "/migrate")
+    content = <Migration identity={identity} connect={connect} />;
+  else if (path === "/alerts") content = <Alerts />;
   else if (path === "/")
     content = (
       <Home
@@ -316,10 +330,15 @@ function SharedReview({
       active = false;
     };
   }, [id]);
-  const bundle = bundles.find(
-    (b) =>
-      b.epoch === review?.draft.epoch && b.profileHash === review.profileHash,
-  );
+  const bundle = knownDeployments
+    .filter((b) => b.enabled)
+    .find(
+      (b) =>
+        b.epoch === review?.draft.epoch && b.profileHash === review.profileHash,
+    );
+  const ReviewComponent = bundle?.migration
+    ? MigrationReviewPanel
+    : ReviewPanel;
   async function sign() {
     if (!review || !bundle || signing) return;
     setSigning(true);
@@ -372,7 +391,12 @@ function SharedReview({
   }
   return (
     <main id="main" className="wrap standard-page shared-review">
-      <PageHeading title={t("review.shared")} intro={t("review.share_note")} />
+      <PageHeading
+        title={t(
+          bundle?.migration ? "migration.shared_heading" : "review.shared",
+        )}
+        intro={t("review.share_note")}
+      />
       <ErrorNotice error={error} />
       {!review && !error && <Busy />}
       {unsent && (
@@ -389,10 +413,16 @@ function SharedReview({
         review &&
         bundle &&
         (identity?.address === review.draft.intent.owner ? (
-          <ReviewPanel
+          <ReviewComponent
             review={review}
             bundle={bundle}
-            onEdit={() => location.assign("/app")}
+            onEdit={() =>
+              location.assign(
+                bundle.migration
+                  ? "/migrate?epoch=" + encodeURIComponent(bundle.epoch)
+                  : "/app",
+              )
+            }
             onSign={() => void sign()}
             signing={signing}
             confirmed={confirmed}

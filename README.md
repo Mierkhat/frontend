@@ -9,14 +9,14 @@ This repository contains the React application, shared interface copy and option
 
 ## Stack
 
-| Component | Technology |
-| --- | --- |
-| Application | TypeScript 7.0.2, React 19.3.1, Vite 8.3.5 |
-| Wallet | Freighter API 6.0.1 |
+| Component          | Technology                                               |
+| ------------------ | -------------------------------------------------------- |
+| Application        | TypeScript 7.0.2, React 19.3.1, Vite 8.3.5               |
+| Wallet             | Freighter API 6.0.1                                      |
 | Transaction policy | `@mierkhat/sdk` 0.1.0, built from the backend repository |
-| Interface | CSS, Lucide, local Archivo and Bitter fonts |
-| Verification | Vitest 5.0.5, Playwright 1.64.1 |
-| Toolchain | Node.js 24.22.1, pnpm 12.15.0 |
+| Interface          | CSS, Lucide, local Archivo and Bitter fonts              |
+| Verification       | Vitest 5.0.5, Playwright 1.64.1                          |
+| Toolchain          | Node.js 24.22.1, pnpm 12.15.0                            |
 
 ## Quick start
 
@@ -34,6 +34,8 @@ pnpm dev
 Open http://localhost:5173. Run the [backend](https://github.com/Mierkhat/backend#quick-start) on `127.0.0.1:3001` in another terminal. Vite forwards `/v1` requests to it. Install and unlock Freighter, select Stellar testnet, then use **Connect wallet** to select it.
 
 The workspace guides you through account funding, token trustlines, testnet token issuance, a vault deposit and a guarded withdrawal. Withdrawals show one position per supported vault and let you choose a pinned output token. Both actual testnet vaults support MKA, MKB and MKOUT outputs. The faucet needs the backend's dedicated issuer configuration; it never substitutes fabricated balances when that configuration is missing.
+
+Use **Withdrawal check** for an unsigned position check, choose a receiving target in the workspace, use **Move vaults** for a partial cross-asset migration, and save conditions in **Alerts**. Both migration directions use separate immutable contracts. See the [withdrawal tools guide](docs/WITHDRAWALS.md) for coverage, refunds, watch privacy and recovery.
 
 The exact SDK tarball is committed under `.vendor/` so a fresh clone builds before the SDK has a registry release. `.vendor/manifest.json` records its provenance and checksum. Application and embed use the same archive. The `prebuild` script compiles the copy package and embed first.
 
@@ -73,6 +75,7 @@ docs/         Architecture, deployment and integration instructions
 
 ## Documentation
 
+- [Withdrawal checks, targets, vault moves and alerts](docs/WITHDRAWALS.md)
 - [Architecture and transaction flow](docs/ARCHITECTURE.md)
 - [Development, deployment and wallet acceptance](docs/OPERATIONS.md)
 - [Appearance and palette](docs/APPEARANCE.md)

@@ -17,7 +17,7 @@ export function SubmissionRecovery({
       <p>
         {t(saved ? "receipt.submission_unknown" : "app.storage_before_send")}
       </p>
-      <p>{t('receipt.keep_open')}</p>
+      <p>{t("receipt.keep_open")}</p>
       <Identity label={t("receipt.hash")} value={hash} />
       <a href={"/receipt/" + hash} target="_blank" rel="noreferrer">
         {t("pending.recovery_link")}
