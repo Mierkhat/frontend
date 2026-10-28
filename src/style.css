@@ -105,11 +105,16 @@ button {
 }
 button:focus-visible,
 a:focus-visible,
-input:focus-visible,
-select:focus-visible,
 summary:focus-visible {
   outline: 3px solid var(--focus);
   outline-offset: 5px;
+}
+input:not([type="checkbox"]):not([type="radio"]):focus,
+select:focus,
+textarea:focus {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+  box-shadow: none;
 }
 .review-panel h2:focus-visible,
 .notice[tabindex]:focus-visible {
@@ -1127,12 +1132,12 @@ svg {
   padding: 15px 10px 15px 0;
   font-variant-numeric: tabular-nums;
 }
-.amount-field input:focus-visible {
+.amount-field input:focus {
   outline: 0;
 }
 .amount-field > div:focus-within {
-  outline: 3px solid var(--focus);
-  outline-offset: 4px;
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
 }
 .amount-field b {
   font-size: 0.8rem;
