@@ -16,7 +16,12 @@ import {
 import { api, migrationBundles, reader } from "../api.js";
 import { wallet } from "../wallet.js";
 import { t } from "../copy.js";
-import { Busy, ErrorNotice, Identity } from "../components/Shared.js";
+import {
+  Busy,
+  ErrorNotice,
+  Identity,
+  PageHeading,
+} from "../components/Shared.js";
 import { SubmissionRecovery } from "../components/SubmissionRecovery.js";
 import { MigrationReviewPanel } from "../components/MigrationReview.js";
 import { WatchButton } from "../components/Watches.js";
@@ -222,8 +227,10 @@ export function Migration({
   const m = b?.migration;
   return (
     <main id="main" className="wrap standard-page tools-page migration-page">
-      <h1>{t("migration.heading")}</h1>
-      <p>{t("migration.intro")}</p>
+      <PageHeading
+        title={t("migration.heading")}
+        intro={t("migration.intro")}
+      />
       {!b || !m ? (
         <p>{t("migration.empty")}</p>
       ) : (
@@ -288,7 +295,15 @@ export function Migration({
                     }}
                   />
                 ) : review ? (
-                  <MigrationReviewPanel review={review} bundle={b} onEdit={invalidate} onSign={()=>void sign()} signing={signing} confirmed={confirmed} onConfirm={()=>setConfirmed(!confirmed)}/>
+                  <MigrationReviewPanel
+                    review={review}
+                    bundle={b}
+                    onEdit={invalidate}
+                    onSign={() => void sign()}
+                    signing={signing}
+                    confirmed={confirmed}
+                    onConfirm={() => setConfirmed(!confirmed)}
+                  />
                 ) : (
                   <>
                     <label className="amount-field">

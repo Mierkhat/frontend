@@ -1,0 +1,618 @@
+/* Fluid composition. The original three brand colours remain the source. */
+:root {
+  --surface: color-mix(in srgb, var(--canvas), var(--text) 3%);
+  --soft: color-mix(in srgb, var(--canvas), var(--text) 6%);
+  --line: color-mix(in srgb, var(--canvas), var(--text) 22%);
+  --strong-line: color-mix(in srgb, var(--canvas), var(--text) 48%);
+  --ease-flow: cubic-bezier(0.22, 1, 0.36, 1);
+  --gutter: clamp(20px, 4vw, 64px);
+}
+:root[data-theme="dark"] {
+  --surface: color-mix(in srgb, var(--canvas), var(--text) 5%);
+  --soft: color-mix(in srgb, var(--canvas), var(--text) 8%);
+  --line: color-mix(in srgb, var(--canvas), var(--text) 24%);
+  --strong-line: color-mix(in srgb, var(--canvas), var(--text) 48%);
+}
+html {
+  scroll-padding-top: 112px;
+}
+.wrap {
+  width: calc(100% - var(--gutter) * 2);
+}
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}
+p {
+  text-wrap: pretty;
+}
+.site-header {
+  position: relative;
+  z-index: 30;
+  width: calc(100% - var(--gutter) * 2);
+  padding-block: 22px;
+  border: 0;
+  gap: 20px;
+}
+.nav {
+  gap: clamp(8px, 1.1vw, 18px);
+}
+.nav > a:not(.button) {
+  position: relative;
+  padding: 12px 10px;
+  border: 0;
+  border-radius: 16px 7px 16px 7px;
+}
+.nav > a:not(.button):hover {
+  border: 0;
+  background: var(--soft);
+}
+.nav a[aria-current="page"] {
+  background: var(--soft);
+  text-decoration: none;
+}
+.nav a[aria-current="page"]::after {
+  content: "";
+  position: absolute;
+  bottom: 5px;
+  width: 16px;
+  height: 3px;
+  left: calc(50% - 8px);
+  border-radius: 100%;
+  background: var(--text);
+}
+.nav-current {
+  border: 0;
+  border-radius: 18px 7px 18px 7px;
+}
+.button {
+  border-radius: 22px 8px 22px 8px;
+  gap: 20px;
+  padding-inline: 24px;
+}
+.button.small {
+  border-radius: 16px 6px 16px 6px;
+}
+.button.secondary {
+  border-color: var(--strong-line);
+}
+.theme-trigger,
+.nav-toggle,
+.dialog-close {
+  border-radius: 50%;
+}
+.theme-options {
+  border-radius: 18px 6px 18px 18px;
+  border-color: var(--line);
+  padding: 8px;
+}
+.theme-options button {
+  border-radius: 10px;
+}
+.hero {
+  padding-block: clamp(54px, 6vw, 100px) clamp(110px, 12vw, 180px);
+}
+.hero-main {
+  position: relative;
+  z-index: 1;
+}
+.hero h1 {
+  font-size: clamp(3.3rem, 7.8vw, 7.8rem);
+  line-height: 1.12;
+  max-width: 1100px;
+}
+.highlight {
+  position: relative;
+  background: none;
+  color: var(--text);
+  padding: 0;
+  margin: 0;
+  isolation: isolate;
+}
+.highlight::before {
+  content: "";
+  position: absolute;
+  inset: 58% -2% -4% -1%;
+  background: var(--accent);
+  border-radius: 48% 12% 42% 16% / 28% 48% 35% 60%;
+  transform: rotate(-1.5deg);
+  z-index: -1;
+}
+:root[data-theme="dark"] .highlight {
+  color: var(--accent);
+}
+:root[data-theme="dark"] .highlight::before {
+  inset-block: 96% -2%;
+}
+.hero-bottom {
+  margin-top: 40px;
+  max-width: 830px;
+  gap: 36px;
+}
+.hero-bottom p {
+  max-width: 460px;
+}
+.hero-flow {
+  width: clamp(200px, 23vw, 340px);
+  position: absolute;
+  right: -10px;
+  bottom: -38px;
+  z-index: 2;
+  pointer-events: none;
+  overflow: visible;
+}
+.flow-track {
+  stroke: var(--line);
+  stroke-width: 2;
+}
+.flow-stream {
+  stroke: var(--accent);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-dasharray: 32 480;
+}
+.flow-pool {
+  fill: var(--accent);
+  stroke: var(--canvas);
+  stroke-width: 12;
+}
+.flow-check {
+  stroke: #000;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.route-band {
+  position: relative;
+  padding-block: clamp(35px, 5vw, 70px) clamp(65px, 6vw, 90px);
+  margin-block: 0;
+  isolation: isolate;
+}
+.section-shore {
+  position: absolute;
+  width: 100%;
+  height: clamp(35px, 5.5vw, 85px);
+  left: 0;
+  fill: var(--accent);
+  pointer-events: none;
+  z-index: -1;
+}
+.shore-top {
+  bottom: calc(100% - 1px);
+}
+.shore-bottom {
+  top: calc(100% - 1px);
+}
+.route-composition {
+  grid-template-columns: 1.05fr 1fr;
+  gap: 0;
+  align-items: center;
+  max-width: 1160px;
+}
+.route-visual {
+  transform: none;
+  box-shadow: none;
+  border: 0;
+  border-radius: 70px 22px 70px 22px;
+  padding: clamp(24px, 3vw, 42px);
+}
+.route-story {
+  transform: none;
+  border-radius: 22px 80px 28px 80px;
+  margin: 60px 0 -35px -20px;
+  padding: clamp(35px, 4vw, 60px);
+  min-height: 480px;
+}
+.route-story h2 {
+  font-size: clamp(2.2rem, 3.4vw, 3.3rem);
+}
+.route-token {
+  border: 0;
+  border-radius: 18px 6px 18px 6px;
+  background: #0000000a;
+  min-width: 0;
+}
+.route-token > div {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.route-check {
+  border-radius: 20px 8px 20px 8px;
+}
+.conditions {
+  padding-block: clamp(100px, 11vw, 160px) clamp(70px, 9vw, 130px);
+}
+.section-intro {
+  gap: clamp(32px, 6vw, 90px);
+}
+.section-intro h2 {
+  font-size: clamp(2.6rem, 4.3vw, 4rem);
+}
+.condition-list {
+  border: 0;
+}
+.condition-list details {
+  padding-inline: clamp(12px, 2vw, 28px);
+  border-radius: 22px 8px 22px 8px;
+  border-bottom-color: var(--line);
+}
+.condition-list details[open] {
+  background: var(--soft);
+  border-bottom-color: transparent;
+  margin-block: 6px;
+}
+.condition-list summary {
+  padding-block: 26px;
+}
+.condition-list details p {
+  padding-bottom: 24px;
+}
+.start-band {
+  border-radius: 8vw 0 0 0;
+  padding-block: clamp(64px, 8vw, 115px);
+}
+.start-inner {
+  gap: clamp(40px, 8vw, 115px);
+}
+.start-inner h2 {
+  font-size: clamp(2.6rem, 4.2vw, 4rem);
+}
+.site-footer {
+  padding-inline: max(var(--gutter), calc((100vw - 1328px) / 2));
+}
+.workspace,
+.standard-page,
+.receipt-page {
+  padding-top: clamp(35px, 5vw, 70px);
+  padding-bottom: clamp(65px, 8vw, 115px);
+}
+.workspace-title,
+.page-heading {
+  margin-bottom: clamp(30px, 4vw, 55px);
+}
+.workspace-title h1,
+.page-heading h1 {
+  font-size: clamp(2.65rem, 4.7vw, 4.5rem);
+}
+.workspace-grid {
+  grid-template-columns: minmax(230px, 0.75fr) minmax(0, 2fr);
+  gap: clamp(24px, 4vw, 60px);
+}
+.portfolio {
+  background: transparent;
+  padding: 24px 0;
+  border: 0;
+  top: 32px;
+}
+.portfolio-top {
+  padding-bottom: 22px;
+}
+.share-balance {
+  font-size: clamp(1.7rem, 2.7vw, 2.6rem);
+}
+.connect-panel {
+  position: relative;
+  isolation: isolate;
+  padding: clamp(28px, 4.5vw, 64px);
+  border-radius: 60px 20px 60px 20px;
+  min-height: 500px;
+}
+.connect-mark {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #0000000a;
+}
+.connect-panel h2 {
+  font-size: clamp(2.1rem, 3vw, 3rem);
+  max-width: 520px;
+}
+.connect-route {
+  margin-top: auto;
+  padding-top: 28px;
+}
+.connect-panel > .text-link {
+  margin-bottom: 30px;
+}
+.workspace-main {
+  position: relative;
+}
+.vault-selection {
+  background: var(--soft);
+  border: 0;
+  border-radius: 32px 12px 0 0;
+  margin-bottom: 0;
+  padding: clamp(20px, 3vw, 36px);
+}
+.vault-selection + .action-editor {
+  background: var(--soft);
+  border-radius: 0 0 32px 12px;
+  padding: clamp(20px, 3vw, 36px);
+  padding-top: 12px;
+}
+.action-tabs {
+  display: inline-flex;
+  background: var(--soft);
+  border: 0;
+  border-radius: 20px 8px 20px 8px;
+  gap: 4px;
+  padding: 5px;
+  margin-bottom: 28px;
+}
+.action-tabs button {
+  padding: 12px 22px;
+  border: 0;
+  border-radius: 16px 5px 16px 5px;
+}
+.action-tabs button[aria-selected="true"] {
+  background: var(--button);
+  color: var(--button-text);
+}
+.setup-strip {
+  border: 0;
+  background: var(--soft);
+  border-radius: 24px 8px 24px 8px;
+  padding: 24px;
+}
+.amount-field > div,
+.search-control {
+  border-radius: 16px 6px 16px 6px;
+  border-color: var(--strong-line);
+}
+input,
+select,
+.vault-selectors select {
+  border-radius: 10px;
+  border-color: var(--strong-line);
+}
+.amount-field input {
+  border-radius: 0;
+}
+.review-panel {
+  border: 1px solid var(--line);
+  border-radius: 32px 12px 32px 12px;
+  padding: clamp(22px, 3vw, 40px);
+}
+.review-amounts {
+  gap: 8px;
+}
+.review-amounts > div {
+  border: 0;
+  border-radius: 20px 8px 20px 8px;
+  background: var(--soft);
+}
+.review-amounts .minimum-result {
+  background: var(--accent);
+}
+.redemption-output {
+  border: 0;
+  background: var(--soft);
+  border-radius: 22px 8px 22px 8px;
+}
+.redemption-output strong {
+  border-radius: 12px 5px 12px 5px;
+}
+.tool-panel {
+  border: 1px solid var(--line);
+  border-radius: 32px 12px 32px 12px;
+  padding: clamp(22px, 3vw, 36px);
+  background: var(--surface);
+}
+.withdrawal-readiness {
+  border: 0;
+  background: var(--soft);
+}
+.tool-route {
+  max-width: 720px;
+}
+.tools-page > .fine-print,
+.tools-page > p {
+  max-width: 750px;
+}
+.hash-search {
+  border-radius: 40px 12px 40px 12px;
+  padding: clamp(24px, 4vw, 45px);
+}
+.activity-row {
+  border-radius: 18px 6px 18px 6px;
+  padding-inline: 18px;
+}
+.activity-controls {
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.activity-controls label,
+.activity-controls select {
+  max-width: 100%;
+}
+.activity-icon {
+  border: 0;
+  border-radius: 50%;
+}
+.receipt-outcome {
+  border-radius: 32px 12px 0 0;
+}
+.receipt-paper {
+  border-top: 0;
+  border-radius: 0 0 32px 12px;
+}
+.notice {
+  border-radius: 0 16px 16px 0;
+}
+.wallet-dialog {
+  border-radius: 32px 12px 32px 12px;
+  border-color: var(--line);
+  padding: 32px;
+}
+.wallet-dialog::backdrop {
+  backdrop-filter: blur(8px);
+}
+.wallet-dialog-icon,
+.wallet-option-icon {
+  border-radius: 50%;
+}
+.wallet-option {
+  border-radius: 20px 8px 20px 8px;
+  border-color: var(--line);
+}
+@media (max-width: 1050px) {
+  .nav {
+    top: calc(100% - 4px);
+    left: 0;
+    right: 0;
+    padding: 16px;
+    border: 1px solid var(--line);
+    border-radius: 24px 8px 24px 8px;
+    box-shadow: 0 16px 40px #0002;
+  }
+  .nav > a:not(.button) {
+    padding: 14px;
+  }
+  .nav a[aria-current="page"]::after {
+    left: auto;
+    right: 16px;
+    bottom: calc(50% - 2px);
+  }
+  .hero-flow {
+    width: 230px;
+    right: 0;
+    bottom: -65px;
+  }
+}
+@media (max-width: 800px) {
+  .hero {
+    padding-bottom: 135px;
+  }
+  .hero h1 {
+    font-size: clamp(3.2rem, 8.8vw, 5.5rem);
+  }
+  .hero-flow {
+    width: 180px;
+    bottom: -48px;
+  }
+  .hero-bottom {
+    gap: 24px;
+    margin-top: 30px;
+  }
+  .route-composition {
+    grid-template-columns: 1fr;
+    max-width: 580px;
+  }
+  .route-visual {
+    width: 100%;
+    border-radius: 40px 14px 40px 14px;
+    padding: 26px;
+  }
+  .route-story {
+    margin: -20px 0 0 20px;
+    padding: 50px 28px 32px;
+    min-height: 0;
+    border-radius: 14px 40px 14px 40px;
+  }
+  .section-intro {
+    grid-template-columns: 1fr;
+  }
+  .workspace-grid {
+    grid-template-columns: 1fr;
+  }
+  .portfolio {
+    position: static;
+    background: var(--soft);
+    border-radius: 28px 10px 28px 10px;
+    padding: 24px;
+  }
+  .connect-panel {
+    border-radius: 40px 14px 40px 14px;
+    min-height: 460px;
+  }
+  .start-inner {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 480px) {
+  :root {
+    --gutter: 20px;
+  }
+  .hero h1 {
+    font-size: clamp(2.7rem, 9vw, 4rem);
+  }
+  .hero {
+    padding-top: 40px;
+    padding-bottom: 130px;
+  }
+  .hero-flow {
+    width: 150px;
+    right: -4px;
+  }
+  .hero-bottom p {
+    font-size: 0.88rem;
+  }
+  .route-visual {
+    padding: 22px 18px;
+  }
+  .route-tokens {
+    gap: 10px;
+  }
+  .route-token {
+    padding: 10px 8px;
+    gap: 7px;
+  }
+  .route-story {
+    margin-left: 12px;
+    padding-inline: 24px;
+  }
+  .route-story h2 {
+    font-size: 2.2rem;
+  }
+  .condition-list summary {
+    font-size: 1rem;
+  }
+  .section-intro h2,
+  .start-inner h2 {
+    font-size: 2.5rem;
+  }
+  .workspace-title {
+    flex-wrap: wrap;
+  }
+  .workspace-title h1,
+  .page-heading h1 {
+    font-size: 2.6rem;
+  }
+  .portfolio {
+    padding: 20px;
+  }
+  .connect-panel {
+    padding: 30px 24px;
+  }
+  .connect-panel h2 {
+    font-size: 2rem;
+  }
+  .action-tabs {
+    width: 100%;
+  }
+  .action-tabs button {
+    flex: 1;
+    padding-inline: 12px;
+  }
+  .review-amounts {
+    grid-template-columns: 1fr;
+  }
+  .review-panel,
+  .tool-panel {
+    padding: 22px 18px;
+    border-radius: 24px 8px 24px 8px;
+  }
+  .hash-search {
+    padding: 24px 18px;
+    border-radius: 28px 10px 28px 10px;
+  }
+  .activity-row {
+    padding-inline: 8px;
+  }
+  .wallet-dialog {
+    padding: 24px;
+  }
+}

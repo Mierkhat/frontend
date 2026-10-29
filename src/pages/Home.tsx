@@ -40,7 +40,7 @@ export function Home({
     ["home.condition_expiry", "home.condition_expiry_body"],
   ];
   return (
-    <main id="main">
+    <main id="main" className="home-page">
       <section className="hero wrap">
         <div className="hero-main">
           <h1>
@@ -56,8 +56,41 @@ export function Home({
             </a>
           </div>
         </div>
+        <svg
+          className="hero-flow"
+          viewBox="0 0 360 360"
+          fill="none"
+          aria-hidden="true"
+        >
+          <path
+            className="flow-track"
+            d="M18 25C180 25 64 180 183 180S324 264 342 335"
+          />
+          <path
+            className="flow-track"
+            d="M342 25C180 25 296 180 183 180S42 264 18 335"
+          />
+          <path
+            className="flow-stream"
+            d="M18 25C180 25 64 180 183 180S324 264 342 335"
+          />
+          <path
+            className="flow-stream"
+            d="M342 25C180 25 296 180 183 180S42 264 18 335"
+          />
+          <circle cx="183" cy="180" r="42" className="flow-pool" />
+          <path d="m169 180 9 9 19-19" className="flow-check" />
+        </svg>
       </section>
       <section className="route-band">
+        <svg
+          className="section-shore shore-top"
+          viewBox="0 0 1440 100"
+          preserveAspectRatio="none"
+          aria-hidden="true"
+        >
+          <path d="M0 100V42C240 118 380-30 740 30S1170 103 1440 0V100Z" />
+        </svg>
         <div className="wrap route-composition">
           <div className="route-visual">
             <div className="route-visual-top">
@@ -138,6 +171,14 @@ export function Home({
             </div>
           </div>
         </div>
+        <svg
+          className="section-shore shore-bottom"
+          viewBox="0 0 1440 100"
+          preserveAspectRatio="none"
+          aria-hidden="true"
+        >
+          <path d="M0 0H1440V50C1090-28 1020 120 630 64S230-4 0 100Z" />
+        </svg>
       </section>
       <section className="conditions wrap" id="conditions">
         <div className="section-intro">

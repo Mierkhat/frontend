@@ -7,7 +7,7 @@ import {
 } from "@mierkhat/sdk";
 import { bundles, knownDeployments, request } from "../api.js";
 import { t } from "../copy.js";
-import { ErrorNotice } from "../components/Shared.js";
+import { ErrorNotice, PageHeading } from "../components/Shared.js";
 import { WithdrawalReadiness } from "../components/WithdrawalReadiness.js";
 import {
   readWatchAccess,
@@ -27,8 +27,10 @@ export function WithdrawalTools({
   const bundle = bundles.find((b) => b.epoch === epoch)!;
   return (
     <main id="main" className="wrap standard-page tools-page">
-      <h1>{t("readiness.heading")}</h1>
-      <p>{t("readiness.intro")}</p>
+      <PageHeading
+        title={t("readiness.heading")}
+        intro={t("readiness.intro")}
+      />
       <form
         className="tool-panel"
         onSubmit={(e) => {
@@ -172,8 +174,7 @@ export function Alerts() {
   }
   return (
     <main id="main" className="wrap standard-page tools-page">
-      <h1>{t("watch.heading")}</h1>
-      <p>{t("watch.intro")}</p>
+      <PageHeading title={t("watch.heading")} intro={t("watch.intro")} />
       <p>{t("watch.note")}</p>
       <div className="tool-actions">
         <button
