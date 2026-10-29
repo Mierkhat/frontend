@@ -170,8 +170,8 @@ importers:
         specifier: workspace:^0.1.0
         version: link:copy
       '@mierkhat/sdk':
-        specifier: file:.vendor/mierkhat-sdk-0.1.0-a1845f09ec72.tgz
-        version: file:.vendor/mierkhat-sdk-0.1.0-a1845f09ec72.tgz(debug@4.4.3)
+        specifier: file:.vendor/mierkhat-sdk-0.1.0-c88163fc2a35.tgz
+        version: file:.vendor/mierkhat-sdk-0.1.0-c88163fc2a35.tgz(debug@4.4.3)
       '@stellar/freighter-api':
         specifier: 6.0.1
         version: 6.0.1
@@ -225,8 +225,8 @@ importers:
         specifier: workspace:^0.1.0
         version: link:../copy
       '@mierkhat/sdk':
-        specifier: file:../.vendor/mierkhat-sdk-0.1.0-a1845f09ec72.tgz
-        version: file:.vendor/mierkhat-sdk-0.1.0-a1845f09ec72.tgz(debug@4.4.3)
+        specifier: file:../.vendor/mierkhat-sdk-0.1.0-c88163fc2a35.tgz
+        version: file:.vendor/mierkhat-sdk-0.1.0-c88163fc2a35.tgz(debug@4.4.3)
       react:
         specifier: ^19.3.1
         version: 19.3.1
@@ -415,8 +415,8 @@ packages:
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
 
-  '@mierkhat/sdk@file:.vendor/mierkhat-sdk-0.1.0-a1845f09ec72.tgz':
-    resolution: {integrity: sha512-8oL2fEw+nS6gdj4kGlhSt4Lz/8sJtIbwC/X2xWI3Ue0DgDjdoEXKmMw2Sk7CEcAM2nWHkZX1K/OFq/oFTCyLdQ==, tarball: file:.vendor/mierkhat-sdk-0.1.0-a1845f09ec72.tgz}
+  '@mierkhat/sdk@file:.vendor/mierkhat-sdk-0.1.0-c88163fc2a35.tgz':
+    resolution: {integrity: sha512-nzkw8b3EkfLWseDTUvBaF6zZzW1ZNJsf0MQI6hnz3MGft7NWD2uYAj9jbOJbVDEsNCt1uZVFQC+jNZNeEg5ZwQ==, tarball: file:.vendor/mierkhat-sdk-0.1.0-c88163fc2a35.tgz}
     version: 0.1.0
 
   '@noble/ed25519@3.2.0':
@@ -1295,7 +1295,7 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.6.0
 
-  '@mierkhat/sdk@file:.vendor/mierkhat-sdk-0.1.0-a1845f09ec72.tgz(debug@4.4.3)':
+  '@mierkhat/sdk@file:.vendor/mierkhat-sdk-0.1.0-c88163fc2a35.tgz(debug@4.4.3)':
     dependencies:
       '@stellar/stellar-sdk': 17.4.0(debug@4.4.3)
       zod: 4.6.7
