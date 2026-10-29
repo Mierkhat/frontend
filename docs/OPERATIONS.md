@@ -10,6 +10,8 @@ Deploy `dist/` to a static host with SPA fallback to `index.html`. Proxy `/v1` t
 
 Preserve the content security policy in `index.html`, including allowed Stellar connections. Only development permits Vite refresh/style injection. Apply TLS; cache HTML conservatively and hashed assets immutably. Do not expose secrets through `VITE_*` variables. Verify direct loads of workspace/help/activity/receipt routes, API health, a real ledger read and testnet wallet connection after hosting changes.
 
+`vercel.json` builds the standalone workspace and serves `dist/`. `/v1` forwards to the separate `mierkhat-backend.vercel.app` API; application routes fall back to `index.html` while API paths stay outside that fallback. Hashed assets have immutable caching. Deploy from the standalone frontend checkout with `vercel deploy --prod --project mierkhat`, after the backend and its database are ready. Backend database, encryption, scheduler and issuer credentials never belong in this project.
+
 ## Acceptance tooling
 
 `pnpm test:e2e` needs a healthy API, public testnet and Playwright Chromium with OS libraries. It builds/serves on port 4173 and makes live requests. Unit/type checks do not require network access.

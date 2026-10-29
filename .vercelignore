@@ -1,0 +1,13 @@
+.git
+.tooling
+.agents
+.env*
+node_modules
+artifacts
+tests
+test-results
+playwright-report
+coverage
+TASKS.md
+AGENT.md
+AGENTS.md
