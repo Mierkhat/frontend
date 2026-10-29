@@ -855,6 +855,31 @@ select,
 .withdrawal-workspace .live-quote > .watch-action {
   margin-top: 20px;
 }
+.withdrawal-selection-next {
+  padding: 0 clamp(20px, 3vw, 36px) clamp(20px, 3vw, 36px);
+  background: var(--soft);
+  border-radius: 0 0 32px 12px;
+}
+.withdrawal-selection-next > p {
+  margin-bottom: 24px;
+  font-size: 0.9rem;
+  line-height: 1.7;
+}
+.withdrawal-screen[data-step="1"] .action-editor {
+  border-radius: 32px 12px 32px 12px;
+  padding-top: clamp(20px, 3vw, 36px);
+}
+.withdrawal-navigation {
+  margin-top: 28px;
+  justify-content: space-between;
+}
+.wallet-confirmation > .section-label {
+  margin-bottom: 24px;
+}
+.wallet-confirmation > p:not(.fine-print) {
+  font-size: 0.95rem;
+  line-height: 1.7;
+}
 @media (max-width: 600px) {
   .share-balance {
     font-size: clamp(1.15rem, 5.4vw, 1.65rem);

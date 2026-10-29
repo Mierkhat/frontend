@@ -10,6 +10,7 @@ import {
   ArrowUpRight,
   Check,
   ChevronRight,
+  ChevronLeft,
   Layers,
   RefreshCw,
   ShieldCheck,
@@ -55,6 +56,7 @@ import { WithdrawalReadiness } from "../components/WithdrawalReadiness.js";
 import { WatchButton } from "../components/Watches.js";
 import { RedemptionOutput } from "../components/RedemptionOutput.js";
 import { WithdrawalProgress } from "../components/WithdrawalProgress.js";
+import { WithdrawalConfirmation } from "../components/WithdrawalConfirmation.js";
 import { sharePreset, remainingPosition } from "../withdrawal.js";
 export interface WalletIdentity {
   address: string;
@@ -82,6 +84,22 @@ export function Workspace({
   positionSelected?: boolean;
 }) {
   const editorId = useId();
+  const [step, setStep] = useState<0 | 1 | 2 | 3>(0);
+  const screen = useRef<HTMLDivElement>(null);
+  const focusScreen = useRef(false);
+  function navigate(next: 0 | 1 | 2 | 3) {
+    focusScreen.current = true;
+    setStep(next);
+  }
+  useEffect(() => {
+    if (!focusScreen.current) return;
+    const heading = screen.current?.querySelector<HTMLHeadingElement>("h2");
+    if (!heading) return;
+    heading.tabIndex = -1;
+    heading.focus({ preventScroll: true });
+    heading.scrollIntoView({ block: "start", behavior: "instant" });
+    focusScreen.current = false;
+  }, [step]);
   const [account, setAccount] = useState<AccountState>(),
     [shares, setShares] = useState(""),
     [sizeMode, setSizeMode] = useState<"shares" | "target">("shares"),
@@ -172,6 +190,7 @@ export function Workspace({
           minimumRaw: d.minimum_raw,
         };
         setMinimum(formatAmount(d.minimum_raw, settlement.decimals));
+        setStep(1);
         if ([10, 50, 100].includes(d.movement_bps))
           setMovement(String(d.movement_bps));
         sessionStorage.removeItem("mierkhat.watchReview");
@@ -190,6 +209,7 @@ export function Workspace({
     invalidate();
     onModeChange(v);
     setQuote(undefined);
+    setStep(0);
   }
   async function work(fn: () => Promise<void>) {
     if (prompt.current) return;
@@ -374,7 +394,10 @@ export function Workspace({
           await reviewLedger(reader, owner),
         ),
       );
-      if (r && g === generation.current) setReview(r);
+      if (r && g === generation.current) {
+        setReview(r);
+        navigate(2);
+      }
     });
   }
   async function sendSaved(
@@ -599,589 +622,204 @@ export function Workspace({
           }
         >
           {owner && mode === "exit" && (
-            <WithdrawalProgress
-              stage={
-                signing || unsent ? 3 : review ? 2 : positionSelected ? 1 : 0
-              }
-            />
+            <WithdrawalProgress stage={unsent ? 3 : step} />
           )}
-          {owner && !displayReview && !unsent && (
-            <div
-              className="action-tabs"
-              role="tablist"
-              aria-label={t("workspace.heading")}
-              onKeyDown={(event) => {
-                if (
-                  busy ||
-                  !["ArrowLeft", "ArrowRight", "Home", "End"].includes(
-                    event.key,
+          {owner &&
+            !displayReview &&
+            !unsent &&
+            (mode === "deposit" || step === 0) && (
+              <div
+                className="action-tabs"
+                role="tablist"
+                aria-label={t("workspace.heading")}
+                onKeyDown={(event) => {
+                  if (
+                    busy ||
+                    !["ArrowLeft", "ArrowRight", "Home", "End"].includes(
+                      event.key,
+                    )
                   )
-                )
-                  return;
-                const tabs = [
-                  ...event.currentTarget.querySelectorAll<HTMLButtonElement>(
-                    '[role="tab"]',
-                  ),
-                ];
-                const current = tabs.indexOf(
-                  document.activeElement as HTMLButtonElement,
-                );
-                if (current < 0) return;
-                event.preventDefault();
-                const next =
-                  event.key === "Home"
-                    ? 0
-                    : event.key === "End"
-                      ? tabs.length - 1
-                      : (current +
-                          (event.key === "ArrowRight" ? 1 : -1) +
-                          tabs.length) %
-                        tabs.length;
-                tabs[next]?.focus();
-                tabs[next]?.click();
-              }}
-            >
-              <button
-                role="tab"
-                id={editorId + "-exit"}
-                aria-controls={editorId}
-                tabIndex={mode === "exit" ? 0 : -1}
-                aria-selected={mode === "exit"}
-                onClick={() => changeMode("exit")}
-                disabled={busy}
+                    return;
+                  const tabs = [
+                    ...event.currentTarget.querySelectorAll<HTMLButtonElement>(
+                      '[role="tab"]',
+                    ),
+                  ];
+                  const current = tabs.indexOf(
+                    document.activeElement as HTMLButtonElement,
+                  );
+                  if (current < 0) return;
+                  event.preventDefault();
+                  const next =
+                    event.key === "Home"
+                      ? 0
+                      : event.key === "End"
+                        ? tabs.length - 1
+                        : (current +
+                            (event.key === "ArrowRight" ? 1 : -1) +
+                            tabs.length) %
+                          tabs.length;
+                  tabs[next]?.focus();
+                  tabs[next]?.click();
+                }}
               >
-                {t("workspace.exit")}
-              </button>
-              <button
-                role="tab"
-                id={editorId + "-deposit"}
-                aria-controls={editorId}
-                tabIndex={mode === "deposit" ? 0 : -1}
-                aria-selected={mode === "deposit"}
-                onClick={() => changeMode("deposit")}
-                disabled={busy}
-              >
-                {t("workspace.deposit")}
-              </button>
-            </div>
-          )}
-          {selection}
-          <ErrorNotice error={error} focusRequest={errorFocusRequest} />
-          {unsent && (
-            <SubmissionRecovery
-              hash={unsent.hash}
-              saved={unsent.saved}
-              retry={async () => {
-                await unsent.send();
-                location.assign("/receipt/" + unsent.hash);
-              }}
-            />
-          )}
-          {unsent ? null : !identity ? (
-            <section className="connect-panel">
-              <span className="connect-mark">
-                <Wallet size={36} strokeWidth={1.2} aria-hidden="true" />
-              </span>
-              <h2>{t("workspace.ready")}</h2>
-              <p>{t("workspace.connect_body")}</p>
-              <button className="button" onClick={() => void connect()}>
-                {t("wallet.connect")}
-                <ArrowUpRight {...icon} />
-              </button>
-              <a
-                className="text-link"
-                href="https://www.freighter.app/"
-                target="_blank"
-                rel="noreferrer"
-              >
-                {t("workspace.install")}
-                <ArrowUpRight {...icon} />
-              </a>
-              <div className="connect-route">
-                <span>
-                  <Layers {...icon} />
-                  {t("home.flow_vault")}
-                </span>
-                <ChevronRight {...icon} />
-                <span>
-                  <ShieldCheck {...icon} />
-                  {t("home.flow_guard")}
-                </span>
+                <button
+                  role="tab"
+                  id={editorId + "-exit"}
+                  aria-controls={editorId}
+                  tabIndex={mode === "exit" ? 0 : -1}
+                  aria-selected={mode === "exit"}
+                  onClick={() => changeMode("exit")}
+                  disabled={busy}
+                >
+                  {t("workspace.exit")}
+                </button>
+                <button
+                  role="tab"
+                  id={editorId + "-deposit"}
+                  aria-controls={editorId}
+                  tabIndex={mode === "deposit" ? 0 : -1}
+                  aria-selected={mode === "deposit"}
+                  onClick={() => changeMode("deposit")}
+                  disabled={busy}
+                >
+                  {t("workspace.deposit")}
+                </button>
               </div>
-            </section>
-          ) : displayReview ? (
-            <>
-              {review ? (
-                <ReviewPanel
-                  review={review}
-                  bundle={bundle}
-                  onEdit={invalidate}
-                  onSign={() => void sign()}
-                  signing={signing}
-                  confirmed={confirmed}
-                  onConfirm={() => setConfirmed(!confirmed)}
-                  onRefresh={() => void prepare()}
-                />
-              ) : (
-                <SetupPanel
-                  review={setup!}
-                  bundle={bundle}
-                  onEdit={invalidate}
-                  onSign={() => void sign()}
-                  signing={signing}
-                  confirmed={confirmed}
-                  onConfirm={() => setConfirmed(!confirmed)}
-                />
-              )}
-            </>
-          ) : (
-            <>
-              <section
-                key={mode}
-                className="action-editor"
-                id={editorId}
-                role="tabpanel"
-                aria-labelledby={editorId + "-" + mode}
-                tabIndex={0}
-              >
-                <h2>
-                  {t(mode === "exit" ? "exit.heading" : "deposit.heading")}
-                </h2>
-                <p className="muted">
-                  {t(mode === "exit" ? "exit.intro" : "deposit.intro")}
-                </p>
-                {!trusted && (
-                  <p className="notice">
-                    <a href="#wallet-tools">{t("withdrawal.setup_needed")}</a>
-                  </p>
-                )}
-                {mode === "deposit" ? (
-                  <>
-                    {bundle.profile.assets.map((a, i) => {
-                      const token = bundle.tokens.find(
-                          (t) => t.address === a.asset,
-                        )!,
-                        balance = account?.tokens.find(
-                          (t) => t.address === a.asset,
-                        );
-                      return (
-                        <div className="amount-field" key={a.asset}>
-                          <span>
-                            {t("deposit.amount", { token: token.symbol })}
-                            <button
-                              type="button"
-                              className="text-button"
-                              disabled={!balance || busy}
-                              onClick={(e) => {
-                                e.preventDefault();
-                                invalidate();
-                                setAmounts((v) =>
-                                  v.map((a, n) =>
-                                    n === i
-                                      ? formatAmount(
-                                          balance!.balanceRaw,
-                                          token.decimals,
-                                        )
-                                      : a,
-                                  ),
-                                );
-                              }}
-                            >
-                              {t("action.max")}
-                            </button>
-                          </span>
-                          <div>
-                            <input
-                              inputMode="decimal"
-                              autoComplete="off"
-                              value={amounts[i]}
-                              onChange={(e) => {
-                                invalidate();
-                                setAmounts((v) =>
-                                  v.map((a, n) =>
-                                    n === i ? e.target.value : a,
-                                  ),
-                                );
-                              }}
-                              disabled={!ready || busy}
-                              aria-label={t("deposit.amount", {
-                                token: token.symbol,
-                              })}
-                            />
-                            <b>{token.symbol}</b>
-                          </div>
-                          <small>
-                            {t("action.available")}{" "}
-                            {balance
-                              ? formatAmount(balance.balanceRaw, token.decimals)
-                              : t("common.unknown")}
-                          </small>
-                        </div>
-                      );
-                    })}
-                    <p className="fine-print">{t("deposit.note")}</p>
-                    <button
-                      className="button"
-                      disabled={!ready || busy || amounts.some((v) => !v)}
-                      onClick={() => void prepare()}
-                    >
-                      {busy ? <Busy /> : t("deposit.review")}
-                      <ArrowUpRight {...icon} />
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <label className="movement-field">
-                      <span>{t("plan.mode")}</span>
-                      <select
-                        value={sizeMode}
-                        disabled={busy}
-                        onChange={(e) => {
-                          invalidate();
-                          setQuote(undefined);
-                          setSizeMode(e.target.value as "shares" | "target");
-                        }}
-                      >
-                        <option value="shares">{t("plan.shares")}</option>
-                        <option value="target">{t("plan.receive")}</option>
-                      </select>
-                    </label>
-                    {sizeMode === "shares" ? (
-                      <>
-                        <div className="amount-field">
-                          <span>
-                            {t("action.shares")}
-                            <button
-                              type="button"
-                              className="text-button"
-                              disabled={!account?.sharesRaw || busy}
-                              onClick={(e) => {
-                                e.preventDefault();
-                                invalidate();
-                                setQuote(undefined);
-                                setShares(
-                                  formatAmount(
-                                    account!.sharesRaw!,
-                                    bundle.shareDecimals,
-                                  ),
-                                );
-                              }}
-                            >
-                              {t("action.max")}
-                            </button>
-                          </span>
-                          <div>
-                            <input
-                              inputMode="decimal"
-                              autoComplete="off"
-                              value={shares}
-                              disabled={!ready || busy}
-                              onChange={(e) => {
-                                invalidate();
-                                setShares(e.target.value);
-                                setQuote(undefined);
-                              }}
-                              aria-label={t("action.shares")}
-                            />
-                            <b>{t("app.shares_unit")}</b>
-                          </div>
-                          <small>
-                            {t("action.available")}{" "}
-                            {account?.sharesRaw
-                              ? formatAmount(
-                                  account.sharesRaw,
-                                  bundle.shareDecimals,
-                                )
-                              : t("common.unknown")}
-                          </small>
-                        </div>
-                        <div
-                          className="withdrawal-presets"
-                          role="group"
-                          aria-label={t("withdrawal.presets")}
-                        >
-                          {[25, 50, 75, 100].map((percent) => (
-                            <button
-                              key={percent}
-                              className="text-button"
-                              disabled={
-                                !ready ||
-                                busy ||
-                                !account?.sharesRaw ||
-                                account.sharesRaw === "0"
-                              }
-                              onClick={() => {
-                                invalidate();
-                                setQuote(undefined);
-                                setShares(
-                                  sharePreset(
-                                    account!.sharesRaw!,
-                                    percent,
-                                    bundle.shareDecimals,
-                                  ),
-                                );
-                              }}
-                            >
-                              {percent === 100
-                                ? t("withdrawal.all")
-                                : t("withdrawal.preset", { percent })}
-                            </button>
-                          ))}
-                        </div>
-                        {account?.sharesRaw &&
-                          remainingPosition(
-                            account.sharesRaw,
-                            shares,
-                            bundle.shareDecimals,
-                          ) !== undefined && (
-                            <p className="withdrawal-remaining">
-                              {t("withdrawal.remaining", {
-                                amount: remainingPosition(
-                                  account.sharesRaw,
-                                  shares,
-                                  bundle.shareDecimals,
-                                )!,
-                              })}
-                            </p>
-                          )}
-                      </>
-                    ) : (
-                      <>
-                        <p>{t("plan.intro")}</p>
-                        <label className="amount-field">
-                          <span>{t("plan.target")}</span>
-                          <div>
-                            <input
-                              inputMode="decimal"
-                              aria-label={t("plan.target")}
-                              value={target}
-                              disabled={!ready || busy}
-                              onChange={(e) => {
-                                invalidate();
-                                setQuote(undefined);
-                                setTarget(e.target.value);
-                              }}
-                            />
-                            <b>{settlement.symbol}</b>
-                          </div>
-                        </label>
-                      </>
-                    )}
-                    <details className="withdrawal-protection">
-                      <summary>{t("withdrawal.protection")}</summary>
-                      <label className="movement-field">
-                        <span>{t("exit.slippage")}</span>
-                        <select
-                          value={movement}
-                          disabled={busy}
-                          onChange={(e) => {
-                            invalidate();
-                            setQuote(undefined);
-                            setMovement(e.target.value);
-                          }}
-                        >
-                          <option value="10">{t("movement.small")}</option>
-                          <option value="50">{t("movement.medium")}</option>
-                          <option value="100">{t("movement.large")}</option>
-                        </select>
-                      </label>
-                      <p className="fine-print">{t("exit.slippage_note")}</p>
-                    </details>
-                    <button
-                      className="button secondary"
-                      disabled={
-                        !ready ||
-                        busy ||
-                        !(sizeMode === "shares" ? shares : target)
-                      }
-                      onClick={() =>
-                        void (sizeMode === "shares"
-                          ? getQuote()
-                          : getTargetPlan())
-                      }
-                    >
-                      {busy ? (
-                        <Busy />
-                      ) : (
-                        t(sizeMode === "shares" ? "exit.quote" : "plan.action")
-                      )}
-                      <RefreshCw {...icon} />
-                    </button>
-                    {account?.sharesRaw === "0" && (
-                      <p className="notice">{t("exit.no_shares")}</p>
-                    )}
-                    {quote && (
-                      <div className="live-quote">
-                        {sizeMode === "target" && (
-                          <p>
-                            {t("plan.result", {
-                              amount: formatAmount(
-                                quote.sharesRaw,
-                                bundle.shareDecimals,
-                              ),
-                            })}{" "}
-                            {t("plan.note")}
-                          </p>
-                        )}
-                        <div className="quote-heading">
-                          <ShieldCheck {...icon} />
-                          <h3>{t("exit.route")}</h3>
-                          <span>
-                            {t("exit.quote_time", { ledger: quote.ledger })}
-                          </span>
-                        </div>
-                        <RedemptionOutput bundle={bundle} />
-                        <details className="internal-quote-details">
-                          <summary>{t("redemption.internal_details")}</summary>
-                          <p className="internal-route-note">
-                            {t("redemption.internal_note", {
-                              token: settlement.symbol,
-                            })}
-                          </p>
-                          <div className="quote-columns">
-                            <span>{t("redemption.from_vault")}</span>
-                            <span>
-                              {t("redemption.contribution", {
-                                token: settlement.symbol,
-                              })}
-                            </span>
-                          </div>
-                          {bundle.profile.assets.map((a, i) => {
-                            const token = bundle.tokens.find(
-                              (t) => t.address === a.asset,
-                            )!;
-                            return (
-                              <div className="quote-route" key={a.asset}>
-                                <span>
-                                  <b>
-                                    {formatAmount(
-                                      quote.withdrawnRaw[i]!,
-                                      token.decimals,
-                                    )}
-                                  </b>{" "}
-                                  {token.symbol}
-                                </span>
-                                <ChevronRight {...icon} />
-                                <span>
-                                  {a.asset === settlement.address ? (
-                                    t("exit.direct_output", {
-                                      token: settlement.symbol,
-                                    })
-                                  ) : (
-                                    <>
-                                      <b>
-                                        {formatAmount(
-                                          quote.swappedRaw[i]!,
-                                          settlement.decimals,
-                                        )}
-                                      </b>{" "}
-                                      {settlement.symbol}
-                                    </>
-                                  )}
-                                </span>
-                              </div>
-                            );
-                          })}
-                        </details>
-                        <div className="quote-total">
-                          <span>
-                            {t("redemption.estimated_wallet", {
-                              token: settlement.symbol,
-                            })}
-                          </span>
-                          <strong>
-                            {formatAmount(
-                              quote.receiveRaw,
-                              settlement.decimals,
-                            )}{" "}
-                            {settlement.symbol}
-                          </strong>
-                        </div>
-                        <p className="fine-print">
-                          {t("withdrawal.quote_note")}
-                        </p>
-                        <label className="amount-field minimum-field">
-                          <span>{t("action.minimum")}</span>
-                          <div>
-                            <input
-                              inputMode="decimal"
-                              autoComplete="off"
-                              value={minimum}
-                              onChange={(e) => {
-                                invalidate();
-                                setMinimum(e.target.value);
-                              }}
-                              disabled={busy || sizeMode === "target"}
-                              aria-label={t("action.minimum")}
-                            />
-                            <b>{settlement.symbol}</b>
-                          </div>
-                          <small>{t("exit.minimum_note")}</small>
-                        </label>
-                        <button
-                          className="button"
-                          onClick={() => void prepare()}
-                          disabled={busy || !minimum}
-                        >
-                          {busy ? (
-                            <Busy
-                              label={t(
-                                withdrawalStage === "refreshing"
-                                  ? "exit.refreshing_quote"
-                                  : "exit.preparing_review",
-                              )}
-                            />
-                          ) : (
-                            t("action.review")
-                          )}
-                          <ArrowUpRight {...icon} />
-                        </button>
-                        <WatchButton
-                          owner={owner!}
-                          bundle={bundle}
-                          shares={quote.sharesRaw}
-                          minimum={(() => {
-                            try {
-                              return parseAmount(minimum, settlement.decimals);
-                            } catch {
-                              return "";
-                            }
-                          })()}
-                          movementBps={Number(movement)}
-                          kind="exit"
-                        />
-                      </div>
-                    )}
-                  </>
-                )}
+            )}
+          <div
+            ref={screen}
+            className={
+              owner && mode === "exit" ? "withdrawal-screen" : undefined
+            }
+            data-step={mode === "exit" ? step : undefined}
+          >
+            {(mode === "deposit" || step === 0) && !displayReview && !unsent
+              ? selection
+              : null}
+            <ErrorNotice error={error} focusRequest={errorFocusRequest} />
+            {unsent && (
+              <SubmissionRecovery
+                hash={unsent.hash}
+                saved={unsent.saved}
+                retry={async () => {
+                  await unsent.send();
+                  location.assign("/receipt/" + unsent.hash);
+                }}
+              />
+            )}
+            {unsent ? null : !identity ? (
+              <section className="connect-panel">
+                <span className="connect-mark">
+                  <Wallet size={36} strokeWidth={1.2} aria-hidden="true" />
+                </span>
+                <h2>{t("workspace.ready")}</h2>
+                <p>{t("workspace.connect_body")}</p>
+                <button className="button" onClick={() => void connect()}>
+                  {t("wallet.connect")}
+                  <ArrowUpRight {...icon} />
+                </button>
+                <a
+                  className="text-link"
+                  href="https://www.freighter.app/"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  {t("workspace.install")}
+                  <ArrowUpRight {...icon} />
+                </a>
+                <div className="connect-route">
+                  <span>
+                    <Layers {...icon} />
+                    {t("home.flow_vault")}
+                  </span>
+                  <ChevronRight {...icon} />
+                  <span>
+                    <ShieldCheck {...icon} />
+                    {t("home.flow_guard")}
+                  </span>
+                </div>
               </section>
-              {owner && mode === "exit" && !displayReview && !unsent && (
-                <details className="workspace-extras readiness-tools">
-                  <summary>{t("withdrawal.availability")}</summary>
-                  <WithdrawalReadiness
-                    owner={owner}
+            ) : displayReview ? (
+              <>
+                {review && mode === "exit" && step === 3 ? (
+                  <WithdrawalConfirmation
+                    review={review}
                     bundle={bundle}
-                    onUse={(raw) => {
-                      invalidate();
-                      setQuote(undefined);
-                      setSizeMode("shares");
-                      setShares(formatAmount(raw, bundle.shareDecimals));
+                    confirmed={confirmed}
+                    signing={signing}
+                    onConfirm={() => setConfirmed(!confirmed)}
+                    onSign={() => void sign()}
+                    onPrevious={() => {
+                      setConfirmed(false);
+                      navigate(2);
+                    }}
+                    onRefresh={() => {
+                      navigate(1);
+                      void prepare();
                     }}
                   />
-                </details>
-              )}
-              <details
-                className="workspace-extras"
-                id="wallet-tools"
-                open={!trusted}
-              >
-                <summary>{t("withdrawal.tools")}</summary>
-                <p>{t("withdrawal.tools_note")}</p>
-                <section className="setup-strip">
-                  <div>
-                    <h2>{t("setup.heading")}</h2>
-                    <p>{t("setup.body")}</p>
+                ) : review ? (
+                  <ReviewPanel
+                    review={review}
+                    bundle={bundle}
+                    onEdit={invalidate}
+                    onSign={() => void sign()}
+                    signing={signing}
+                    confirmed={confirmed}
+                    onConfirm={() => setConfirmed(!confirmed)}
+                    onRefresh={() => {
+                      navigate(1);
+                      void prepare();
+                    }}
+                    onNext={() => {
+                      setConfirmed(false);
+                      navigate(3);
+                    }}
+                    onPrevious={() => {
+                      invalidate();
+                      navigate(1);
+                    }}
+                  />
+                ) : (
+                  <SetupPanel
+                    review={setup!}
+                    bundle={bundle}
+                    onEdit={invalidate}
+                    onSign={() => void sign()}
+                    signing={signing}
+                    confirmed={confirmed}
+                    onConfirm={() => setConfirmed(!confirmed)}
+                  />
+                )}
+              </>
+            ) : mode === "exit" && step === 0 ? (
+              <>
+                <section className="withdrawal-selection-next">
+                  <p>{t("withdrawal.selection_intro")}</p>
+                  {!trusted && (
+                    <p className="notice">
+                      <a href="#wallet-tools">{t("withdrawal.setup_needed")}</a>
+                    </p>
+                  )}
+                  <div className="action-buttons">
+                    <button
+                      className="button"
+                      disabled={!ready || busy}
+                      onClick={() => navigate(1)}
+                    >
+                      {t("withdrawal.next")}
+                      <ChevronRight {...icon} />
+                    </button>
                   </div>
+                </section>
+                <details
+                  className="workspace-extras"
+                  id="wallet-tools"
+                  open={!trusted}
+                >
+                  <summary>{t("withdrawal.tools")}</summary>
+                  <p>{t("withdrawal.tools_note")}</p>
                   <div className="setup-actions">
                     <button
                       className="button secondary small"
@@ -1193,11 +831,6 @@ export function Workspace({
                         })
                       }
                     >
-                      {account?.funded ? (
-                        <Check {...icon} />
-                      ) : (
-                        <Wallet {...icon} />
-                      )}{" "}
                       {t(account?.funded ? "setup.funded" : "setup.fund")}
                     </button>
                     <button
@@ -1205,7 +838,6 @@ export function Workspace({
                       disabled={busy || !account?.funded || !!trusted}
                       onClick={() => void prepareTrust()}
                     >
-                      {trusted && <Check {...icon} />}{" "}
                       {t(trusted ? "setup.trusted" : "setup.trust")}
                     </button>
                     <button
@@ -1214,25 +846,555 @@ export function Workspace({
                       onClick={() => void faucet()}
                     >
                       {t("setup.faucet")}
-                      <ArrowUpRight {...icon} />
                     </button>
                   </div>
-                  <p className="fine-print">{t("setup.faucet_note")}</p>
-                </section>
-                <details className="maintenance">
-                  <summary>{t("restore.maintenance")}</summary>
-                  <p>{t("restore.body")}</p>
-                  <button
-                    className="button secondary small"
-                    disabled={busy || !account?.funded}
-                    onClick={() => void prepareRestore()}
-                  >
-                    {t("restore.action")}
-                  </button>
+                  <details className="maintenance">
+                    <summary>{t("restore.maintenance")}</summary>
+                    <p>{t("restore.body")}</p>
+                    <button
+                      className="button secondary small"
+                      disabled={busy || !account?.funded}
+                      onClick={() => void prepareRestore()}
+                    >
+                      {t("restore.action")}
+                    </button>
+                  </details>
                 </details>
-              </details>
-            </>
-          )}
+              </>
+            ) : (
+              <>
+                <section
+                  key={mode}
+                  className="action-editor"
+                  id={editorId}
+                  role={mode === "exit" ? "region" : "tabpanel"}
+                  aria-labelledby={
+                    mode === "exit"
+                      ? editorId + "-heading"
+                      : editorId + "-" + mode
+                  }
+                  tabIndex={0}
+                >
+                  <h2 id={editorId + "-heading"} tabIndex={-1}>
+                    {t(mode === "exit" ? "exit.heading" : "deposit.heading")}
+                  </h2>
+                  <p className="muted">
+                    {mode === "exit"
+                      ? t("exit.intro", {
+                          vault: bundle.vaultName,
+                          token: settlement.symbol,
+                        })
+                      : t("deposit.intro")}
+                  </p>
+                  {!trusted && (
+                    <p className="notice">
+                      <a href="#wallet-tools">{t("withdrawal.setup_needed")}</a>
+                    </p>
+                  )}
+                  {mode === "deposit" ? (
+                    <>
+                      {bundle.profile.assets.map((a, i) => {
+                        const token = bundle.tokens.find(
+                            (t) => t.address === a.asset,
+                          )!,
+                          balance = account?.tokens.find(
+                            (t) => t.address === a.asset,
+                          );
+                        return (
+                          <div className="amount-field" key={a.asset}>
+                            <span>
+                              {t("deposit.amount", { token: token.symbol })}
+                              <button
+                                type="button"
+                                className="text-button"
+                                disabled={!balance || busy}
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  invalidate();
+                                  setAmounts((v) =>
+                                    v.map((a, n) =>
+                                      n === i
+                                        ? formatAmount(
+                                            balance!.balanceRaw,
+                                            token.decimals,
+                                          )
+                                        : a,
+                                    ),
+                                  );
+                                }}
+                              >
+                                {t("action.max")}
+                              </button>
+                            </span>
+                            <div>
+                              <input
+                                inputMode="decimal"
+                                autoComplete="off"
+                                value={amounts[i]}
+                                onChange={(e) => {
+                                  invalidate();
+                                  setAmounts((v) =>
+                                    v.map((a, n) =>
+                                      n === i ? e.target.value : a,
+                                    ),
+                                  );
+                                }}
+                                disabled={!ready || busy}
+                                aria-label={t("deposit.amount", {
+                                  token: token.symbol,
+                                })}
+                              />
+                              <b>{token.symbol}</b>
+                            </div>
+                            <small>
+                              {t("action.available")}{" "}
+                              {balance
+                                ? formatAmount(
+                                    balance.balanceRaw,
+                                    token.decimals,
+                                  )
+                                : t("common.unknown")}
+                            </small>
+                          </div>
+                        );
+                      })}
+                      <p className="fine-print">{t("deposit.note")}</p>
+                      <button
+                        className="button"
+                        disabled={!ready || busy || amounts.some((v) => !v)}
+                        onClick={() => void prepare()}
+                      >
+                        {busy ? <Busy /> : t("deposit.review")}
+                        <ArrowUpRight {...icon} />
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <label className="movement-field">
+                        <span>{t("plan.mode")}</span>
+                        <select
+                          value={sizeMode}
+                          disabled={busy}
+                          onChange={(e) => {
+                            invalidate();
+                            setQuote(undefined);
+                            setSizeMode(e.target.value as "shares" | "target");
+                          }}
+                        >
+                          <option value="shares">{t("plan.shares")}</option>
+                          <option value="target">{t("plan.receive")}</option>
+                        </select>
+                      </label>
+                      {sizeMode === "shares" ? (
+                        <>
+                          <div className="amount-field">
+                            <span>
+                              {t("action.shares")}
+                              <button
+                                type="button"
+                                className="text-button"
+                                disabled={!account?.sharesRaw || busy}
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  invalidate();
+                                  setQuote(undefined);
+                                  setShares(
+                                    formatAmount(
+                                      account!.sharesRaw!,
+                                      bundle.shareDecimals,
+                                    ),
+                                  );
+                                }}
+                              >
+                                {t("action.max")}
+                              </button>
+                            </span>
+                            <div>
+                              <input
+                                inputMode="decimal"
+                                autoComplete="off"
+                                value={shares}
+                                disabled={!ready || busy}
+                                onChange={(e) => {
+                                  invalidate();
+                                  setShares(e.target.value);
+                                  setQuote(undefined);
+                                }}
+                                aria-label={t("action.shares")}
+                              />
+                              <b>{t("app.shares_unit")}</b>
+                            </div>
+                            <small>
+                              {t("action.available")}{" "}
+                              {account?.sharesRaw
+                                ? formatAmount(
+                                    account.sharesRaw,
+                                    bundle.shareDecimals,
+                                  )
+                                : t("common.unknown")}
+                            </small>
+                          </div>
+                          <div
+                            className="withdrawal-presets"
+                            role="group"
+                            aria-label={t("withdrawal.presets")}
+                          >
+                            {[25, 50, 75, 100].map((percent) => (
+                              <button
+                                key={percent}
+                                className="text-button"
+                                disabled={
+                                  !ready ||
+                                  busy ||
+                                  !account?.sharesRaw ||
+                                  account.sharesRaw === "0"
+                                }
+                                onClick={() => {
+                                  invalidate();
+                                  setQuote(undefined);
+                                  setShares(
+                                    sharePreset(
+                                      account!.sharesRaw!,
+                                      percent,
+                                      bundle.shareDecimals,
+                                    ),
+                                  );
+                                }}
+                              >
+                                {percent === 100
+                                  ? t("withdrawal.all")
+                                  : t("withdrawal.preset", { percent })}
+                              </button>
+                            ))}
+                          </div>
+                          {account?.sharesRaw &&
+                            remainingPosition(
+                              account.sharesRaw,
+                              shares,
+                              bundle.shareDecimals,
+                            ) !== undefined && (
+                              <p className="withdrawal-remaining">
+                                {t("withdrawal.remaining", {
+                                  amount: remainingPosition(
+                                    account.sharesRaw,
+                                    shares,
+                                    bundle.shareDecimals,
+                                  )!,
+                                })}
+                              </p>
+                            )}
+                        </>
+                      ) : (
+                        <>
+                          <p>{t("plan.intro")}</p>
+                          <label className="amount-field">
+                            <span>{t("plan.target")}</span>
+                            <div>
+                              <input
+                                inputMode="decimal"
+                                aria-label={t("plan.target")}
+                                value={target}
+                                disabled={!ready || busy}
+                                onChange={(e) => {
+                                  invalidate();
+                                  setQuote(undefined);
+                                  setTarget(e.target.value);
+                                }}
+                              />
+                              <b>{settlement.symbol}</b>
+                            </div>
+                          </label>
+                        </>
+                      )}
+                      <details className="withdrawal-protection">
+                        <summary>{t("withdrawal.protection")}</summary>
+                        <label className="movement-field">
+                          <span>{t("exit.slippage")}</span>
+                          <select
+                            value={movement}
+                            disabled={busy}
+                            onChange={(e) => {
+                              invalidate();
+                              setQuote(undefined);
+                              setMovement(e.target.value);
+                            }}
+                          >
+                            <option value="10">{t("movement.small")}</option>
+                            <option value="50">{t("movement.medium")}</option>
+                            <option value="100">{t("movement.large")}</option>
+                          </select>
+                        </label>
+                        <p className="fine-print">{t("exit.slippage_note")}</p>
+                      </details>
+                      <button
+                        className="button secondary"
+                        disabled={
+                          !ready ||
+                          busy ||
+                          !(sizeMode === "shares" ? shares : target)
+                        }
+                        onClick={() =>
+                          void (sizeMode === "shares"
+                            ? getQuote()
+                            : getTargetPlan())
+                        }
+                      >
+                        {busy ? (
+                          <Busy />
+                        ) : (
+                          t(
+                            sizeMode === "shares"
+                              ? "exit.quote"
+                              : "plan.action",
+                          )
+                        )}
+                        <RefreshCw {...icon} />
+                      </button>
+                      {account?.sharesRaw === "0" && (
+                        <p className="notice">{t("exit.no_shares")}</p>
+                      )}
+                      {quote && (
+                        <div className="live-quote">
+                          {sizeMode === "target" && (
+                            <p>
+                              {t("plan.result", {
+                                amount: formatAmount(
+                                  quote.sharesRaw,
+                                  bundle.shareDecimals,
+                                ),
+                              })}{" "}
+                              {t("plan.note")}
+                            </p>
+                          )}
+                          <div className="quote-heading">
+                            <ShieldCheck {...icon} />
+                            <h3>{t("exit.route")}</h3>
+                            <span>
+                              {t("exit.quote_time", { ledger: quote.ledger })}
+                            </span>
+                          </div>
+                          <RedemptionOutput bundle={bundle} />
+                          <details className="internal-quote-details">
+                            <summary>
+                              {t("redemption.internal_details")}
+                            </summary>
+                            <p className="internal-route-note">
+                              {t("redemption.internal_note", {
+                                token: settlement.symbol,
+                              })}
+                            </p>
+                            <div className="quote-columns">
+                              <span>{t("redemption.from_vault")}</span>
+                              <span>
+                                {t("redemption.contribution", {
+                                  token: settlement.symbol,
+                                })}
+                              </span>
+                            </div>
+                            {bundle.profile.assets.map((a, i) => {
+                              const token = bundle.tokens.find(
+                                (t) => t.address === a.asset,
+                              )!;
+                              return (
+                                <div className="quote-route" key={a.asset}>
+                                  <span>
+                                    <b>
+                                      {formatAmount(
+                                        quote.withdrawnRaw[i]!,
+                                        token.decimals,
+                                      )}
+                                    </b>{" "}
+                                    {token.symbol}
+                                  </span>
+                                  <ChevronRight {...icon} />
+                                  <span>
+                                    {a.asset === settlement.address ? (
+                                      t("exit.direct_output", {
+                                        token: settlement.symbol,
+                                      })
+                                    ) : (
+                                      <>
+                                        <b>
+                                          {formatAmount(
+                                            quote.swappedRaw[i]!,
+                                            settlement.decimals,
+                                          )}
+                                        </b>{" "}
+                                        {settlement.symbol}
+                                      </>
+                                    )}
+                                  </span>
+                                </div>
+                              );
+                            })}
+                          </details>
+                          <div className="quote-total">
+                            <span>
+                              {t("redemption.estimated_wallet", {
+                                token: settlement.symbol,
+                              })}
+                            </span>
+                            <strong>
+                              {formatAmount(
+                                quote.receiveRaw,
+                                settlement.decimals,
+                              )}{" "}
+                              {settlement.symbol}
+                            </strong>
+                          </div>
+                          <p className="fine-print">
+                            {t("withdrawal.quote_note")}
+                          </p>
+                          <label className="amount-field minimum-field">
+                            <span>{t("action.minimum")}</span>
+                            <div>
+                              <input
+                                inputMode="decimal"
+                                autoComplete="off"
+                                value={minimum}
+                                onChange={(e) => {
+                                  invalidate();
+                                  setMinimum(e.target.value);
+                                }}
+                                disabled={busy || sizeMode === "target"}
+                                aria-label={t("action.minimum")}
+                              />
+                              <b>{settlement.symbol}</b>
+                            </div>
+                            <small>{t("exit.minimum_note")}</small>
+                          </label>
+                          <WatchButton
+                            owner={owner!}
+                            bundle={bundle}
+                            shares={quote.sharesRaw}
+                            minimum={(() => {
+                              try {
+                                return parseAmount(
+                                  minimum,
+                                  settlement.decimals,
+                                );
+                              } catch {
+                                return "";
+                              }
+                            })()}
+                            movementBps={Number(movement)}
+                            kind="exit"
+                          />
+                        </div>
+                      )}
+                      <div className="action-buttons withdrawal-navigation">
+                        <button
+                          className="button secondary"
+                          disabled={busy}
+                          onClick={() => {
+                            invalidate();
+                            navigate(0);
+                          }}
+                        >
+                          <ChevronLeft {...icon} />
+                          {t("withdrawal.previous")}
+                        </button>
+                        <button
+                          className="button"
+                          disabled={!ready || busy || !quote || !minimum}
+                          onClick={() => void prepare()}
+                        >
+                          {busy ? (
+                            <Busy
+                              label={t(
+                                withdrawalStage === "refreshing"
+                                  ? "exit.refreshing_quote"
+                                  : "exit.preparing_review",
+                              )}
+                            />
+                          ) : (
+                            t("withdrawal.next")
+                          )}
+                          <ChevronRight {...icon} />
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </section>
+                {owner && mode === "exit" && !displayReview && !unsent && (
+                  <details className="workspace-extras readiness-tools">
+                    <summary>{t("withdrawal.availability")}</summary>
+                    <WithdrawalReadiness
+                      owner={owner}
+                      bundle={bundle}
+                      onUse={(raw) => {
+                        invalidate();
+                        setQuote(undefined);
+                        setSizeMode("shares");
+                        setShares(formatAmount(raw, bundle.shareDecimals));
+                      }}
+                    />
+                  </details>
+                )}
+                <details
+                  className="workspace-extras"
+                  id="wallet-tools"
+                  open={!trusted}
+                >
+                  <summary>{t("withdrawal.tools")}</summary>
+                  <p>{t("withdrawal.tools_note")}</p>
+                  <section className="setup-strip">
+                    <div>
+                      <h2>{t("setup.heading")}</h2>
+                      <p>{t("setup.body")}</p>
+                    </div>
+                    <div className="setup-actions">
+                      <button
+                        className="button secondary small"
+                        disabled={busy || !account || account.funded}
+                        onClick={() =>
+                          void work(async () => {
+                            await api.fund(assertAccount());
+                            await refresh();
+                          })
+                        }
+                      >
+                        {account?.funded ? (
+                          <Check {...icon} />
+                        ) : (
+                          <Wallet {...icon} />
+                        )}{" "}
+                        {t(account?.funded ? "setup.funded" : "setup.fund")}
+                      </button>
+                      <button
+                        className="button secondary small"
+                        disabled={busy || !account?.funded || !!trusted}
+                        onClick={() => void prepareTrust()}
+                      >
+                        {trusted && <Check {...icon} />}{" "}
+                        {t(trusted ? "setup.trusted" : "setup.trust")}
+                      </button>
+                      <button
+                        className="button secondary small"
+                        disabled={busy || !trusted}
+                        onClick={() => void faucet()}
+                      >
+                        {t("setup.faucet")}
+                        <ArrowUpRight {...icon} />
+                      </button>
+                    </div>
+                    <p className="fine-print">{t("setup.faucet_note")}</p>
+                  </section>
+                  <details className="maintenance">
+                    <summary>{t("restore.maintenance")}</summary>
+                    <p>{t("restore.body")}</p>
+                    <button
+                      className="button secondary small"
+                      disabled={busy || !account?.funded}
+                      onClick={() => void prepareRestore()}
+                    >
+                      {t("restore.action")}
+                    </button>
+                  </details>
+                </details>
+              </>
+            )}
+          </div>
         </div>
       </div>
     </main>

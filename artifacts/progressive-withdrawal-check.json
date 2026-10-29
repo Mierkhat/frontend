@@ -1,0 +1,29 @@
+{
+  "checkedAt": "2026-10-29T13:29:44.357Z",
+  "genuineFreighter": true,
+  "actualTestnet": true,
+  "sharesRaw": "250000000",
+  "outputToken": "MKA",
+  "signatures": 0,
+  "submissions": 0,
+  "screenLayoutChecks": 24,
+  "widths": [
+    320,
+    768,
+    1440
+  ],
+  "themes": [
+    "light",
+    "dark"
+  ],
+  "verified": {
+    "oneVisibleScreen": true,
+    "nextPreviousPreservesSelectionsAmountsAndMinimum": true,
+    "presetsAndRemainingExact": true,
+    "focusFollowsScreen": true,
+    "separateWalletScreenWithExplicitConsent": true,
+    "returningToWalletRequiresConsentAgain": true
+  },
+  "verificationLimit": "Operation17167 reached and verified all four progressive screens. Its later stale quote refresh returned actual API503 Unavailable. That terminal check and the subsequent live homepage rerun did not pass. No freshness or fee enforcement was relaxed.",
+  "completeLiveFreshnessAcceptance": false
+}

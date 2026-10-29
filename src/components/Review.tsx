@@ -26,6 +26,8 @@ export function ReviewPanel({
   confirmed,
   onConfirm,
   onRefresh,
+  onNext,
+  onPrevious,
 }: {
   review: Review;
   bundle: DeploymentBundle;
@@ -35,6 +37,8 @@ export function ReviewPanel({
   confirmed: boolean;
   onConfirm: () => void;
   onRefresh?: () => void;
+  onNext?: () => void;
+  onPrevious?: () => void;
   changed?: boolean;
 }) {
   const heading = useReviewHeading(review.envelopeDigest);
@@ -173,7 +177,7 @@ export function ReviewPanel({
         <div className="notice" role="status">
           {t("review.stale")}
         </div>
-      ) : (
+      ) : !onNext ? (
         <label className="check-field">
           <input
             type="checkbox"
@@ -183,23 +187,38 @@ export function ReviewPanel({
           />
           <span>{t("review.confirm")}</span>
         </label>
-      )}
+      ) : null}
       <div className="action-buttons">
         <button
           className="button"
-          disabled={signing || !confirmed || stale}
-          onClick={onSign}
+          disabled={signing || (!onNext && !confirmed) || stale}
+          onClick={onNext ?? onSign}
         >
-          {signing ? <Busy /> : t("action.sign")}
+          {signing ? <Busy /> : t(onNext ? "withdrawal.next" : "action.sign")}
           <ArrowUpRight {...icon} />
         </button>
         <button
           className="button secondary"
           disabled={signing}
-          onClick={stale && onRefresh ? onRefresh : onEdit}
+          onClick={onPrevious ?? (stale && onRefresh ? onRefresh : onEdit)}
         >
-          {t(stale ? "review.new" : "action.edit")}
+          {t(
+            onPrevious
+              ? "withdrawal.previous"
+              : stale
+                ? "review.new"
+                : "action.edit",
+          )}
         </button>
+        {stale && onPrevious && onRefresh && (
+          <button
+            className="button secondary"
+            onClick={onRefresh}
+            disabled={signing}
+          >
+            {t("review.new")}
+          </button>
+        )}
         {review.reviewId && (
           <button
             className="text-button"
