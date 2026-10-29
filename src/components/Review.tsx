@@ -25,6 +25,7 @@ export function ReviewPanel({
   signing,
   confirmed,
   onConfirm,
+  onRefresh,
 }: {
   review: Review;
   bundle: DeploymentBundle;
@@ -33,6 +34,7 @@ export function ReviewPanel({
   signing: boolean;
   confirmed: boolean;
   onConfirm: () => void;
+  onRefresh?: () => void;
   changed?: boolean;
 }) {
   const heading = useReviewHeading(review.envelopeDigest);
@@ -80,6 +82,10 @@ export function ReviewPanel({
         </div>
       </div>
       <dl className="review-facts">
+        <div>
+          <dt>{t("withdrawal.from")}</dt>
+          <dd>{bundle.vaultName}</dd>
+        </div>
         <div>
           <dt>{t("action.expected")}</dt>
           <dd>
@@ -190,7 +196,7 @@ export function ReviewPanel({
         <button
           className="button secondary"
           disabled={signing}
-          onClick={onEdit}
+          onClick={stale && onRefresh ? onRefresh : onEdit}
         >
           {t(stale ? "review.new" : "action.edit")}
         </button>

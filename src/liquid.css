@@ -761,3 +761,111 @@ select,
     transition: none !important;
   }
 }
+
+/* The withdrawal has one primary path; optional tools sit below it. */
+.withdrawal-progress {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  padding: 0;
+  margin: 0 0 28px;
+  list-style: none;
+}
+.withdrawal-progress li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  padding-bottom: 14px;
+  border-bottom: 2px solid var(--line);
+}
+.withdrawal-progress li > span {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--soft);
+}
+.withdrawal-progress li[aria-current="step"] {
+  border-color: var(--text);
+  font-weight: 650;
+}
+.withdrawal-progress li[aria-current="step"] > span,
+.withdrawal-progress li[data-complete="true"] > span {
+  background: var(--accent);
+  color: #000;
+}
+.withdrawal-workspace .action-editor {
+  background: var(--soft);
+  border-radius: 0 0 32px 12px;
+  padding: clamp(20px, 3vw, 36px);
+  padding-top: 12px;
+}
+.withdrawal-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-block: -4px 20px;
+}
+.withdrawal-presets button {
+  flex: 1;
+  justify-content: center;
+  min-height: 44px;
+  padding: 8px 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px 5px 12px 5px;
+  font-size: 0.82rem;
+  background: var(--surface);
+}
+.withdrawal-presets button:hover:not(:disabled) {
+  border-color: var(--strong-line);
+}
+.withdrawal-remaining {
+  font-size: 0.85rem;
+  line-height: 1.6;
+  margin-bottom: 22px;
+}
+.withdrawal-protection {
+  font-size: 0.83rem;
+  margin-bottom: 24px;
+}
+.withdrawal-protection > summary,
+.workspace-extras > summary {
+  padding-block: 16px;
+  cursor: pointer;
+}
+.withdrawal-protection[open] .movement-field {
+  margin-top: 16px;
+}
+.workspace-extras {
+  margin-top: 24px;
+  border-top: 1px solid var(--line);
+  font-size: 0.86rem;
+}
+.workspace-extras .setup-strip,
+.workspace-extras .withdrawal-readiness {
+  margin-block: 16px;
+}
+.workspace-extras .maintenance {
+  margin-top: 20px;
+}
+.withdrawal-workspace .live-quote > .watch-action {
+  margin-top: 20px;
+}
+@media (max-width: 600px) {
+  .share-balance {
+    font-size: clamp(1.15rem, 5.4vw, 1.65rem);
+  }
+  .withdrawal-progress {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .withdrawal-progress li {
+    font-size: 0.75rem;
+  }
+  .withdrawal-presets button {
+    padding-inline: 10px;
+  }
+}

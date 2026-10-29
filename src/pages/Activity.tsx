@@ -284,26 +284,35 @@ export function ReceiptPage({
         <p className="kicker">{t("home.network")}</p>
         <h1>
           {t(
-            success
-              ? "receipt.setup_success"
-              : failed
-                ? "failure.heading"
-                : "receipt.waiting",
+            success && receipt && !receipt.migration
+              ? "withdrawal.confirmed"
+              : !success && !failed && record.kind === "exit"
+                ? "withdrawal.pending"
+                : success
+                  ? "receipt.setup_success"
+                  : failed
+                    ? "failure.heading"
+                    : "receipt.waiting",
           )}
         </h1>
         <p>
           {t(
-            success
-              ? receipt
-                ? "success.heading"
-                : "receipt.no_guard"
-              : failed
-                ? "failure.body"
-                : observation?.rawStatus === "SUCCESS_AWAITING_RECEIPT"
-                  ? "receipt.awaiting_metadata"
-                  : observation?.state === "unknown"
-                    ? "pending.unknown"
-                    : "pending.body",
+            success && receipt && !receipt.migration
+              ? "withdrawal.confirmed_body"
+              : success
+                ? receipt
+                  ? "success.heading"
+                  : "receipt.no_guard"
+                : failed
+                  ? "failure.body"
+                  : observation?.rawStatus === "SUCCESS_AWAITING_RECEIPT"
+                    ? "receipt.awaiting_metadata"
+                    : observation?.state === "unknown"
+                      ? "pending.unknown"
+                      : observation?.state === "pending" &&
+                          record.kind === "exit"
+                        ? "withdrawal.pending_body"
+                        : "pending.body",
           )}
         </p>
       </div>
@@ -427,7 +436,11 @@ export function ReceiptPage({
         <p>{t("receipt.resume_note")}</p>
         {(success || failed) && (
           <a className="button" href="/app">
-            {t("action.another")}
+            {t(
+              receipt && !receipt.migration
+                ? "withdrawal.another"
+                : "action.another",
+            )}
             <ArrowUpRight {...icon} />
           </a>
         )}

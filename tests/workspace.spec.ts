@@ -74,7 +74,7 @@ test("tracks the actual committed guarded exit and preserves its receipt on relo
   const hash = publicJourney.operations.exit.hash;
   await page.goto("/receipt/" + hash);
   await expect(
-    page.getByRole("heading", { name: t("receipt.setup_success") }),
+    page.getByRole("heading", { name: t("withdrawal.confirmed") }),
   ).toBeVisible({ timeout: 40000 });
   await expect(page.locator(".receipt-outcome strong").last()).toContainText(
     "48.7489096",
@@ -87,7 +87,7 @@ test("tracks the actual committed guarded exit and preserves its receipt on relo
   );
   await page.reload();
   await expect(
-    page.getByRole("heading", { name: t("receipt.setup_success") }),
+    page.getByRole("heading", { name: t("withdrawal.confirmed") }),
   ).toBeVisible();
   await page.goto("/activity");
   await expect(page.locator(".activity-row")).toHaveCount(1);

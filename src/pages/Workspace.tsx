@@ -54,6 +54,8 @@ import { ReviewPanel, SetupPanel } from "../components/Review.js";
 import { WithdrawalReadiness } from "../components/WithdrawalReadiness.js";
 import { WatchButton } from "../components/Watches.js";
 import { RedemptionOutput } from "../components/RedemptionOutput.js";
+import { WithdrawalProgress } from "../components/WithdrawalProgress.js";
+import { sharePreset, remainingPosition } from "../withdrawal.js";
 export interface WalletIdentity {
   address: string;
   networkPassphrase: string;
@@ -67,6 +69,7 @@ export function Workspace({
   onModeChange,
   selection,
   onLockChange,
+  positionSelected = true,
 }: {
   bundle: DeploymentBundle;
   identity?: WalletIdentity;
@@ -76,6 +79,7 @@ export function Workspace({
   onModeChange: (mode: "exit" | "deposit") => void;
   selection?: ReactNode;
   onLockChange?: (locked: boolean) => void;
+  positionSelected?: boolean;
 }) {
   const editorId = useId();
   const [account, setAccount] = useState<AccountState>(),
@@ -475,15 +479,27 @@ export function Workspace({
     });
   }
   const trusted = account?.funded && account.tokens.every((t) => t.trusted),
-    ready = !!identity && trusted,
+    ready = !!identity && trusted && (mode !== "exit" || positionSelected),
     displayReview = !!review || !!setup;
   return (
     <main id="main" className="workspace wrap">
       <div className="workspace-title">
         <div>
           <p className="kicker">{bundle.vaultName}</p>
-          <h1>{t("workspace.heading")}</h1>
-          <p>{t("workspace.intro")}</p>
+          <h1>
+            {t(
+              identity && mode === "exit"
+                ? "withdrawal.heading"
+                : "workspace.heading",
+            )}
+          </h1>
+          <p>
+            {t(
+              identity && mode === "exit"
+                ? "withdrawal.intro"
+                : "workspace.intro",
+            )}
+          </p>
         </div>
         {identity ? (
           <button
@@ -575,20 +591,81 @@ export function Workspace({
             <ArrowUpRight {...icon} />
           </a>
         </aside>
-        <div className="workspace-main">
-          {selection}
-          {owner && mode === "exit" && !displayReview && !unsent && (
-            <WithdrawalReadiness
-              owner={owner}
-              bundle={bundle}
-              onUse={(raw) => {
-                invalidate();
-                setQuote(undefined);
-                setSizeMode("shares");
-                setShares(formatAmount(raw, bundle.shareDecimals));
-              }}
+        <div
+          className={
+            mode === "exit"
+              ? "workspace-main withdrawal-workspace"
+              : "workspace-main"
+          }
+        >
+          {owner && mode === "exit" && (
+            <WithdrawalProgress
+              stage={
+                signing || unsent ? 3 : review ? 2 : positionSelected ? 1 : 0
+              }
             />
           )}
+          {owner && !displayReview && !unsent && (
+            <div
+              className="action-tabs"
+              role="tablist"
+              aria-label={t("workspace.heading")}
+              onKeyDown={(event) => {
+                if (
+                  busy ||
+                  !["ArrowLeft", "ArrowRight", "Home", "End"].includes(
+                    event.key,
+                  )
+                )
+                  return;
+                const tabs = [
+                  ...event.currentTarget.querySelectorAll<HTMLButtonElement>(
+                    '[role="tab"]',
+                  ),
+                ];
+                const current = tabs.indexOf(
+                  document.activeElement as HTMLButtonElement,
+                );
+                if (current < 0) return;
+                event.preventDefault();
+                const next =
+                  event.key === "Home"
+                    ? 0
+                    : event.key === "End"
+                      ? tabs.length - 1
+                      : (current +
+                          (event.key === "ArrowRight" ? 1 : -1) +
+                          tabs.length) %
+                        tabs.length;
+                tabs[next]?.focus();
+                tabs[next]?.click();
+              }}
+            >
+              <button
+                role="tab"
+                id={editorId + "-exit"}
+                aria-controls={editorId}
+                tabIndex={mode === "exit" ? 0 : -1}
+                aria-selected={mode === "exit"}
+                onClick={() => changeMode("exit")}
+                disabled={busy}
+              >
+                {t("workspace.exit")}
+              </button>
+              <button
+                role="tab"
+                id={editorId + "-deposit"}
+                aria-controls={editorId}
+                tabIndex={mode === "deposit" ? 0 : -1}
+                aria-selected={mode === "deposit"}
+                onClick={() => changeMode("deposit")}
+                disabled={busy}
+              >
+                {t("workspace.deposit")}
+              </button>
+            </div>
+          )}
+          {selection}
           <ErrorNotice error={error} focusRequest={errorFocusRequest} />
           {unsent && (
             <SubmissionRecovery
@@ -643,6 +720,7 @@ export function Workspace({
                   signing={signing}
                   confirmed={confirmed}
                   onConfirm={() => setConfirmed(!confirmed)}
+                  onRefresh={() => void prepare()}
                 />
               ) : (
                 <SetupPanel
@@ -658,117 +736,6 @@ export function Workspace({
             </>
           ) : (
             <>
-              <section className="setup-strip">
-                <div>
-                  <h2>{t("setup.heading")}</h2>
-                  <p>{t("setup.body")}</p>
-                </div>
-                <div className="setup-actions">
-                  <button
-                    className="button secondary small"
-                    disabled={busy || !account || account.funded}
-                    onClick={() =>
-                      void work(async () => {
-                        await api.fund(assertAccount());
-                        await refresh();
-                      })
-                    }
-                  >
-                    {account?.funded ? (
-                      <Check {...icon} />
-                    ) : (
-                      <Wallet {...icon} />
-                    )}{" "}
-                    {t(account?.funded ? "setup.funded" : "setup.fund")}
-                  </button>
-                  <button
-                    className="button secondary small"
-                    disabled={busy || !account?.funded || !!trusted}
-                    onClick={() => void prepareTrust()}
-                  >
-                    {trusted && <Check {...icon} />}{" "}
-                    {t(trusted ? "setup.trusted" : "setup.trust")}
-                  </button>
-                  <button
-                    className="button secondary small"
-                    disabled={busy || !trusted}
-                    onClick={() => void faucet()}
-                  >
-                    {t("setup.faucet")}
-                    <ArrowUpRight {...icon} />
-                  </button>
-                </div>
-                <p className="fine-print">{t("setup.faucet_note")}</p>
-              </section>
-              <details className="maintenance">
-                <summary>{t("restore.maintenance")}</summary>
-                <p>{t("restore.body")}</p>
-                <button
-                  className="button secondary small"
-                  disabled={busy || !account?.funded}
-                  onClick={() => void prepareRestore()}
-                >
-                  {t("restore.action")}
-                </button>
-              </details>
-              <div
-                className="action-tabs"
-                role="tablist"
-                aria-label={t("workspace.heading")}
-                onKeyDown={(event) => {
-                  if (
-                    busy ||
-                    !["ArrowLeft", "ArrowRight", "Home", "End"].includes(
-                      event.key,
-                    )
-                  )
-                    return;
-                  const tabs = [
-                    ...event.currentTarget.querySelectorAll<HTMLButtonElement>(
-                      '[role="tab"]',
-                    ),
-                  ];
-                  const current = tabs.indexOf(
-                    document.activeElement as HTMLButtonElement,
-                  );
-                  if (current < 0) return;
-                  event.preventDefault();
-                  const next =
-                    event.key === "Home"
-                      ? 0
-                      : event.key === "End"
-                        ? tabs.length - 1
-                        : (current +
-                            (event.key === "ArrowRight" ? 1 : -1) +
-                            tabs.length) %
-                          tabs.length;
-                  tabs[next]?.focus();
-                  tabs[next]?.click();
-                }}
-              >
-                <button
-                  role="tab"
-                  id={editorId + "-exit"}
-                  aria-controls={editorId}
-                  tabIndex={mode === "exit" ? 0 : -1}
-                  aria-selected={mode === "exit"}
-                  onClick={() => changeMode("exit")}
-                  disabled={busy}
-                >
-                  {t("workspace.exit")}
-                </button>
-                <button
-                  role="tab"
-                  id={editorId + "-deposit"}
-                  aria-controls={editorId}
-                  tabIndex={mode === "deposit" ? 0 : -1}
-                  aria-selected={mode === "deposit"}
-                  onClick={() => changeMode("deposit")}
-                  disabled={busy}
-                >
-                  {t("workspace.deposit")}
-                </button>
-              </div>
               <section
                 key={mode}
                 className="action-editor"
@@ -783,6 +750,11 @@ export function Workspace({
                 <p className="muted">
                   {t(mode === "exit" ? "exit.intro" : "deposit.intro")}
                 </p>
+                {!trusted && (
+                  <p className="notice">
+                    <a href="#wallet-tools">{t("withdrawal.setup_needed")}</a>
+                  </p>
+                )}
                 {mode === "deposit" ? (
                   <>
                     {bundle.profile.assets.map((a, i) => {
@@ -923,6 +895,55 @@ export function Workspace({
                               : t("common.unknown")}
                           </small>
                         </div>
+                        <div
+                          className="withdrawal-presets"
+                          role="group"
+                          aria-label={t("withdrawal.presets")}
+                        >
+                          {[25, 50, 75, 100].map((percent) => (
+                            <button
+                              key={percent}
+                              className="text-button"
+                              disabled={
+                                !ready ||
+                                busy ||
+                                !account?.sharesRaw ||
+                                account.sharesRaw === "0"
+                              }
+                              onClick={() => {
+                                invalidate();
+                                setQuote(undefined);
+                                setShares(
+                                  sharePreset(
+                                    account!.sharesRaw!,
+                                    percent,
+                                    bundle.shareDecimals,
+                                  ),
+                                );
+                              }}
+                            >
+                              {percent === 100
+                                ? t("withdrawal.all")
+                                : t("withdrawal.preset", { percent })}
+                            </button>
+                          ))}
+                        </div>
+                        {account?.sharesRaw &&
+                          remainingPosition(
+                            account.sharesRaw,
+                            shares,
+                            bundle.shareDecimals,
+                          ) !== undefined && (
+                            <p className="withdrawal-remaining">
+                              {t("withdrawal.remaining", {
+                                amount: remainingPosition(
+                                  account.sharesRaw,
+                                  shares,
+                                  bundle.shareDecimals,
+                                )!,
+                              })}
+                            </p>
+                          )}
                       </>
                     ) : (
                       <>
@@ -946,23 +967,26 @@ export function Workspace({
                         </label>
                       </>
                     )}
-                    <label className="movement-field">
-                      <span>{t("exit.slippage")}</span>
-                      <select
-                        value={movement}
-                        disabled={busy}
-                        onChange={(e) => {
-                          invalidate();
-                          setQuote(undefined);
-                          setMovement(e.target.value);
-                        }}
-                      >
-                        <option value="10">{t("movement.small")}</option>
-                        <option value="50">{t("movement.medium")}</option>
-                        <option value="100">{t("movement.large")}</option>
-                      </select>
-                    </label>
-                    <p className="fine-print">{t("exit.slippage_note")}</p>
+                    <details className="withdrawal-protection">
+                      <summary>{t("withdrawal.protection")}</summary>
+                      <label className="movement-field">
+                        <span>{t("exit.slippage")}</span>
+                        <select
+                          value={movement}
+                          disabled={busy}
+                          onChange={(e) => {
+                            invalidate();
+                            setQuote(undefined);
+                            setMovement(e.target.value);
+                          }}
+                        >
+                          <option value="10">{t("movement.small")}</option>
+                          <option value="50">{t("movement.medium")}</option>
+                          <option value="100">{t("movement.large")}</option>
+                        </select>
+                      </label>
+                      <p className="fine-print">{t("exit.slippage_note")}</p>
+                    </details>
                     <button
                       className="button secondary"
                       disabled={
@@ -1007,20 +1031,6 @@ export function Workspace({
                           </span>
                         </div>
                         <RedemptionOutput bundle={bundle} />
-                        <WatchButton
-                          owner={owner!}
-                          bundle={bundle}
-                          shares={quote.sharesRaw}
-                          minimum={(() => {
-                            try {
-                              return parseAmount(minimum, settlement.decimals);
-                            } catch {
-                              return "";
-                            }
-                          })()}
-                          movementBps={Number(movement)}
-                          kind="exit"
-                        />
                         <details className="internal-quote-details">
                           <summary>{t("redemption.internal_details")}</summary>
                           <p className="internal-route-note">
@@ -1087,6 +1097,9 @@ export function Workspace({
                             {settlement.symbol}
                           </strong>
                         </div>
+                        <p className="fine-print">
+                          {t("withdrawal.quote_note")}
+                        </p>
                         <label className="amount-field minimum-field">
                           <span>{t("action.minimum")}</span>
                           <div>
@@ -1123,11 +1136,101 @@ export function Workspace({
                           )}
                           <ArrowUpRight {...icon} />
                         </button>
+                        <WatchButton
+                          owner={owner!}
+                          bundle={bundle}
+                          shares={quote.sharesRaw}
+                          minimum={(() => {
+                            try {
+                              return parseAmount(minimum, settlement.decimals);
+                            } catch {
+                              return "";
+                            }
+                          })()}
+                          movementBps={Number(movement)}
+                          kind="exit"
+                        />
                       </div>
                     )}
                   </>
                 )}
               </section>
+              {owner && mode === "exit" && !displayReview && !unsent && (
+                <details className="workspace-extras readiness-tools">
+                  <summary>{t("withdrawal.availability")}</summary>
+                  <WithdrawalReadiness
+                    owner={owner}
+                    bundle={bundle}
+                    onUse={(raw) => {
+                      invalidate();
+                      setQuote(undefined);
+                      setSizeMode("shares");
+                      setShares(formatAmount(raw, bundle.shareDecimals));
+                    }}
+                  />
+                </details>
+              )}
+              <details
+                className="workspace-extras"
+                id="wallet-tools"
+                open={!trusted}
+              >
+                <summary>{t("withdrawal.tools")}</summary>
+                <p>{t("withdrawal.tools_note")}</p>
+                <section className="setup-strip">
+                  <div>
+                    <h2>{t("setup.heading")}</h2>
+                    <p>{t("setup.body")}</p>
+                  </div>
+                  <div className="setup-actions">
+                    <button
+                      className="button secondary small"
+                      disabled={busy || !account || account.funded}
+                      onClick={() =>
+                        void work(async () => {
+                          await api.fund(assertAccount());
+                          await refresh();
+                        })
+                      }
+                    >
+                      {account?.funded ? (
+                        <Check {...icon} />
+                      ) : (
+                        <Wallet {...icon} />
+                      )}{" "}
+                      {t(account?.funded ? "setup.funded" : "setup.fund")}
+                    </button>
+                    <button
+                      className="button secondary small"
+                      disabled={busy || !account?.funded || !!trusted}
+                      onClick={() => void prepareTrust()}
+                    >
+                      {trusted && <Check {...icon} />}{" "}
+                      {t(trusted ? "setup.trusted" : "setup.trust")}
+                    </button>
+                    <button
+                      className="button secondary small"
+                      disabled={busy || !trusted}
+                      onClick={() => void faucet()}
+                    >
+                      {t("setup.faucet")}
+                      <ArrowUpRight {...icon} />
+                    </button>
+                  </div>
+                  <p className="fine-print">{t("setup.faucet_note")}</p>
+                </section>
+                <details className="maintenance">
+                  <summary>{t("restore.maintenance")}</summary>
+                  <p>{t("restore.body")}</p>
+                  <button
+                    className="button secondary small"
+                    disabled={busy || !account?.funded}
+                    onClick={() => void prepareRestore()}
+                  >
+                    {t("restore.action")}
+                  </button>
+                </details>
+              </details>
             </>
           )}
         </div>

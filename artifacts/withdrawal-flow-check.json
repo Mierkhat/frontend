@@ -1,0 +1,99 @@
+{
+  "checkedAt": "2026-10-29T12:27:42.012Z",
+  "genuineFreighter": true,
+  "actualTestnet": true,
+  "submissions": 0,
+  "signingRequests": 0,
+  "layouts": [
+    {
+      "phase": "amount",
+      "width": 320,
+      "theme": "light"
+    },
+    {
+      "phase": "amount",
+      "width": 320,
+      "theme": "dark"
+    },
+    {
+      "phase": "amount",
+      "width": 768,
+      "theme": "light"
+    },
+    {
+      "phase": "amount",
+      "width": 768,
+      "theme": "dark"
+    },
+    {
+      "phase": "amount",
+      "width": 1440,
+      "theme": "light"
+    },
+    {
+      "phase": "amount",
+      "width": 1440,
+      "theme": "dark"
+    },
+    {
+      "phase": "review",
+      "width": 320,
+      "theme": "light"
+    },
+    {
+      "phase": "review",
+      "width": 320,
+      "theme": "dark"
+    },
+    {
+      "phase": "review",
+      "width": 768,
+      "theme": "light"
+    },
+    {
+      "phase": "review",
+      "width": 768,
+      "theme": "dark"
+    },
+    {
+      "phase": "review",
+      "width": 1440,
+      "theme": "light"
+    },
+    {
+      "phase": "review",
+      "width": 1440,
+      "theme": "dark"
+    }
+  ],
+  "assertions": {
+    "heldPositionSelected": true,
+    "presetsExact": true,
+    "remainingPositionExact": true,
+    "primaryFlowBeforeOptionalTools": true,
+    "keyboardTabs": true,
+    "vaultAndOutputChangesClearInputsAndKeepFocus": true,
+    "staleQuoteRefreshPreservesMinimum": true,
+    "actualFeeShown": true,
+    "expiredReviewRefreshPreservesMinimumAndRequiresNewConsent": true,
+    "highMinimumRejectedInFocusedError": true
+  },
+  "owner": "GCAVTARGBNDGUCVBMXE2RU5OW5TBJZANS3UDPTMGDAECA3XYHGY77T5C",
+  "holdingSharesRaw": "17999999000",
+  "feeMaximumStroops": "22702242",
+  "withdrawalSharesRaw": "250000000",
+  "screenshots": [
+    "withdrawal-flow-connected-320-light.png",
+    "withdrawal-flow-connected-1440-dark.png",
+    "withdrawal-flow-review-320-light.png",
+    "withdrawal-flow-review-1440-dark.png"
+  ],
+  "verification": {
+    "sdkTests": 38,
+    "frontendTests": 4,
+    "liveBrowserScenarios": 14,
+    "authoredCopyEntries": 538,
+    "productionBuild": "PASS",
+    "appCopyEmbedTypes": "PASS"
+  }
+}

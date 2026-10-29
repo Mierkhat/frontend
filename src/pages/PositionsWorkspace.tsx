@@ -75,6 +75,24 @@ export function PositionsWorkspace({
   const held = positions?.positions.find(
     (p) => p.vault === bundle.profile.vault.address,
   );
+  useEffect(() => {
+    if (
+      mode !== "exit" ||
+      locked ||
+      !positions ||
+      held ||
+      !positions.positions.length
+    )
+      return;
+    const vault = positions.positions[0]!.vault;
+    const next =
+      routes.find(
+        (b) =>
+          b.profile.vault.address === vault &&
+          b.profile.settlement === bundle.profile.settlement,
+      ) ?? routes.find((b) => b.profile.vault.address === vault);
+    if (next) setEpoch(next.epoch);
+  }, [positions, epoch, mode, locked]);
   function select(next: DeploymentBundle, focus: string) {
     if (locked) return;
     focusAfterChange.current = focus;
@@ -210,6 +228,7 @@ export function PositionsWorkspace({
       mode={mode}
       onModeChange={setMode}
       selection={selection}
+      positionSelected={mode === "deposit" || !!held}
       onLockChange={onLockChange}
     />
   );
