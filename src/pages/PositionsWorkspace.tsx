@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   formatAmount,
   type DeploymentBundle,
+  type AccountState,
   type PositionsState,
 } from "@mierkhat/sdk";
 import { api, bundles } from "../api.js";
@@ -32,6 +33,23 @@ export function PositionsWorkspace({
     [error, setError] = useState<unknown>(),
     [loading, setLoading] = useState(false),
     [locked, setLocked] = useState(false);
+  const [walletSnapshot, setWalletSnapshot] = useState<{
+    account: AccountState;
+    vault: string;
+    networkPassphrase: string;
+    readAt: number;
+  }>();
+  const onAccountChange = useCallback(
+    (account: AccountState, route: DeploymentBundle) => {
+      setWalletSnapshot({
+        account,
+        vault: route.profile.vault.address,
+        networkPassphrase: route.networkPassphrase,
+        readAt: Date.now(),
+      });
+    },
+    [],
+  );
   const focusAfterChange = useRef<string | undefined>(undefined);
   const lockedRef = useRef(false);
   const onLockChange = useCallback((value: boolean) => {
@@ -218,6 +236,22 @@ export function PositionsWorkspace({
       />
     </section>
   ) : undefined;
+  // Only selection/navigation uses this recent snapshot. Quotes, preparation and
+  // signing still verify the selected deployment and current network state.
+  const initialAccount =
+    walletSnapshot &&
+    walletSnapshot.account.owner === identity?.address &&
+    walletSnapshot.networkPassphrase === bundle.networkPassphrase &&
+    walletSnapshot.vault === bundle.profile.vault.address &&
+    Date.now() - walletSnapshot.readAt < 30000 &&
+    bundle.tokens.every((token) =>
+      walletSnapshot.account.tokens.some(
+        (known) =>
+          known.address === token.address && known.decimals === token.decimals,
+      ),
+    )
+      ? walletSnapshot.account
+      : undefined;
   return (
     <Workspace
       key={bundle.epoch}
@@ -230,6 +264,8 @@ export function PositionsWorkspace({
       selection={selection}
       positionSelected={mode === "deposit" || !!held}
       onLockChange={onLockChange}
+      initialAccount={initialAccount}
+      onAccountChange={onAccountChange}
     />
   );
 }

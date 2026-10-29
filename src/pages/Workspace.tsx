@@ -72,6 +72,8 @@ export function Workspace({
   selection,
   onLockChange,
   positionSelected = true,
+  initialAccount,
+  onAccountChange,
 }: {
   bundle: DeploymentBundle;
   identity?: WalletIdentity;
@@ -82,6 +84,8 @@ export function Workspace({
   selection?: ReactNode;
   onLockChange?: (locked: boolean) => void;
   positionSelected?: boolean;
+  initialAccount?: AccountState;
+  onAccountChange?: (account: AccountState, bundle: DeploymentBundle) => void;
 }) {
   const editorId = useId();
   const [step, setStep] = useState<0 | 1 | 2 | 3>(0);
@@ -100,7 +104,9 @@ export function Workspace({
     heading.scrollIntoView({ block: "start", behavior: "instant" });
     focusScreen.current = false;
   }, [step]);
-  const [account, setAccount] = useState<AccountState>(),
+  const [account, setAccount] = useState<AccountState | undefined>(
+      initialAccount,
+    ),
     [shares, setShares] = useState(""),
     [sizeMode, setSizeMode] = useState<"shares" | "target">("shares"),
     [target, setTarget] = useState(""),
@@ -147,12 +153,13 @@ export function Workspace({
     try {
       const result = await api.account(owner, bundle.epoch);
       setAccount(result);
+      onAccountChange?.(result, bundle);
     } catch (e) {
       setError(e);
     } finally {
       setBalanceLoading(false);
     }
-  }, [owner, bundle.epoch]);
+  }, [owner, bundle.epoch, onAccountChange]);
   useEffect(() => {
     void refresh();
     const timer = setInterval(() => {
@@ -797,7 +804,8 @@ export function Workspace({
               <>
                 <section className="withdrawal-selection-next">
                   <p>{t("withdrawal.selection_intro")}</p>
-                  {!trusted && (
+                  {!account && <Busy label={t("withdrawal.checking_wallet")} />}
+                  {account && !trusted && (
                     <p className="notice">
                       <a href="#wallet-tools">{t("withdrawal.setup_needed")}</a>
                     </p>
@@ -816,7 +824,7 @@ export function Workspace({
                 <details
                   className="workspace-extras"
                   id="wallet-tools"
-                  open={!trusted}
+                  open={!!account && !trusted}
                 >
                   <summary>{t("withdrawal.tools")}</summary>
                   <p>{t("withdrawal.tools_note")}</p>
@@ -886,7 +894,7 @@ export function Workspace({
                         })
                       : t("deposit.intro")}
                   </p>
-                  {!trusted && (
+                  {account && !trusted && (
                     <p className="notice">
                       <a href="#wallet-tools">{t("withdrawal.setup_needed")}</a>
                     </p>
@@ -1334,7 +1342,7 @@ export function Workspace({
                 <details
                   className="workspace-extras"
                   id="wallet-tools"
-                  open={!trusted}
+                  open={!!account && !trusted}
                 >
                   <summary>{t("withdrawal.tools")}</summary>
                   <p>{t("withdrawal.tools_note")}</p>

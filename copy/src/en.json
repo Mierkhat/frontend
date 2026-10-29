@@ -522,6 +522,7 @@
   "withdrawal.step_review": "Review",
   "withdrawal.step_confirm": "Wallet confirmation",
   "withdrawal.next": "Next",
+  "withdrawal.checking_wallet": "Checking your wallet and vault position",
   "withdrawal.previous": "Previous",
   "withdrawal.selection_intro": "Choose a vault you hold shares in and the token you want to receive. You will enter the amount next.",
   "withdrawal.wallet_heading": "Confirm your withdrawal in Freighter",

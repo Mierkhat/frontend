@@ -1,29 +1,174 @@
 {
-  "checkedAt": "2026-10-29T13:29:44.357Z",
+  "checkedAt": "2026-10-29T14:21:18.647Z",
   "genuineFreighter": true,
   "actualTestnet": true,
-  "sharesRaw": "250000000",
-  "outputToken": "MKA",
-  "signatures": 0,
   "submissions": 0,
-  "screenLayoutChecks": 24,
-  "widths": [
-    320,
-    768,
-    1440
+  "signingRequests": 0,
+  "layouts": [
+    {
+      "step": 0,
+      "width": 320,
+      "theme": "light",
+      "file": "step-0-320-light.png"
+    },
+    {
+      "step": 0,
+      "width": 320,
+      "theme": "dark",
+      "file": "step-0-320-dark.png"
+    },
+    {
+      "step": 0,
+      "width": 768,
+      "theme": "light",
+      "file": "step-0-768-light.png"
+    },
+    {
+      "step": 0,
+      "width": 768,
+      "theme": "dark",
+      "file": "step-0-768-dark.png"
+    },
+    {
+      "step": 0,
+      "width": 1440,
+      "theme": "light",
+      "file": "step-0-1440-light.png"
+    },
+    {
+      "step": 0,
+      "width": 1440,
+      "theme": "dark",
+      "file": "step-0-1440-dark.png"
+    },
+    {
+      "step": 1,
+      "width": 320,
+      "theme": "light",
+      "file": "step-1-320-light.png"
+    },
+    {
+      "step": 1,
+      "width": 320,
+      "theme": "dark",
+      "file": "step-1-320-dark.png"
+    },
+    {
+      "step": 1,
+      "width": 768,
+      "theme": "light",
+      "file": "step-1-768-light.png"
+    },
+    {
+      "step": 1,
+      "width": 768,
+      "theme": "dark",
+      "file": "step-1-768-dark.png"
+    },
+    {
+      "step": 1,
+      "width": 1440,
+      "theme": "light",
+      "file": "step-1-1440-light.png"
+    },
+    {
+      "step": 1,
+      "width": 1440,
+      "theme": "dark",
+      "file": "step-1-1440-dark.png"
+    },
+    {
+      "step": 2,
+      "width": 320,
+      "theme": "light",
+      "file": "step-2-320-light.png"
+    },
+    {
+      "step": 2,
+      "width": 320,
+      "theme": "dark",
+      "file": "step-2-320-dark.png"
+    },
+    {
+      "step": 2,
+      "width": 768,
+      "theme": "light",
+      "file": "step-2-768-light.png"
+    },
+    {
+      "step": 2,
+      "width": 768,
+      "theme": "dark",
+      "file": "step-2-768-dark.png"
+    },
+    {
+      "step": 2,
+      "width": 1440,
+      "theme": "light",
+      "file": "step-2-1440-light.png"
+    },
+    {
+      "step": 2,
+      "width": 1440,
+      "theme": "dark",
+      "file": "step-2-1440-dark.png"
+    },
+    {
+      "step": 3,
+      "width": 320,
+      "theme": "light",
+      "file": "step-3-320-light.png"
+    },
+    {
+      "step": 3,
+      "width": 320,
+      "theme": "dark",
+      "file": "step-3-320-dark.png"
+    },
+    {
+      "step": 3,
+      "width": 768,
+      "theme": "light",
+      "file": "step-3-768-light.png"
+    },
+    {
+      "step": 3,
+      "width": 768,
+      "theme": "dark",
+      "file": "step-3-768-dark.png"
+    },
+    {
+      "step": 3,
+      "width": 1440,
+      "theme": "light",
+      "file": "step-3-1440-light.png"
+    },
+    {
+      "step": 3,
+      "width": 1440,
+      "theme": "dark",
+      "file": "step-3-1440-dark.png"
+    }
   ],
-  "themes": [
-    "light",
-    "dark"
-  ],
-  "verified": {
+  "assertions": {
+    "tokenSwitchRetainsNextWithoutFalseSetupNotice": true,
     "oneVisibleScreen": true,
     "nextPreviousPreservesSelectionsAmountsAndMinimum": true,
     "presetsAndRemainingExact": true,
     "focusFollowsScreen": true,
     "separateWalletScreenWithExplicitConsent": true,
-    "returningToWalletRequiresConsentAgain": true
+    "returningToWalletRequiresConsentAgain": true,
+    "staleQuoteAndReviewRefreshPreserveMinimum": true,
+    "staleReviewBlocksNext": true,
+    "highMinimumRejectedInFocusedError": true
   },
-  "verificationLimit": "Operation17167 reached and verified all four progressive screens. Its later stale quote refresh returned actual API503 Unavailable. That terminal check and the subsequent live homepage rerun did not pass. No freshness or fee enforcement was relaxed.",
-  "completeLiveFreshnessAcceptance": false
+  "feeMaximumStroops": "58914",
+  "owner": "GCAVTARGBNDGUCVBMXE2RU5OW5TBJZANS3UDPTMGDAECA3XYHGY77T5C",
+  "completed": true,
+  "buildOrigin": "http://localhost:4173",
+  "apiOrigin": "https://mierkhat-backend.vercel.app",
+  "apiTransport": "Exact response forwarding from the deployed API; no fixture responses",
+  "appAssertionsPassed": true,
+  "harnessCleanupSucceeded": false,
+  "harnessCleanupNote": "All app assertions passed. An in-flight account read raised a browser context disposal error during shutdown. The helper now awaits route cleanup; direct public verification follows deployment."
 }

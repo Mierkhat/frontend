@@ -98,3 +98,5 @@ Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request. Report se
 ## License
 
 Mierkhat-authored code uses the [MIT license](LICENSE). Dependencies, upstream protocols, fonts where bundled and brand usage retain the terms described in [third-party notices](THIRD_PARTY_NOTICES.md).
+
+Output token changes retain a recently verified wallet and share balance for the same account, network and vault while fresh reads continue. An unknown wallet setup shows a checking status; only confirmed incomplete setup shows the setup notice. Quotes and reviews are still cleared when the route changes.
