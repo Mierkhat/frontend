@@ -616,3 +616,148 @@ select,
     padding: 24px;
   }
 }
+
+/* Navigation carries the composition across real document loads. */
+@media (prefers-reduced-motion: no-preference) {
+  @view-transition {
+    navigation: auto;
+  }
+  .site-header {
+    view-transition-name: site-header;
+  }
+  .site-footer {
+    view-transition-name: site-footer;
+  }
+  ::view-transition-group(*) {
+    animation-duration: 320ms;
+    animation-timing-function: var(--ease-flow);
+  }
+  ::view-transition-old(root) {
+    animation: page-leave 240ms var(--ease-flow) both;
+  }
+  ::view-transition-new(root) {
+    animation: page-arrive 380ms var(--ease-flow) both;
+  }
+  .flow-stream {
+    animation: flow-current 7s linear infinite;
+    animation-play-state: paused;
+  }
+  .flow-stream:nth-of-type(4) {
+    animation-delay: -3.5s;
+  }
+  .hero-flow[data-flowing="true"] .flow-stream {
+    animation-play-state: running;
+  }
+  .button,
+  .wallet-option,
+  .nav > a,
+  .theme-trigger,
+  .nav-toggle,
+  .dialog-close,
+  .action-tabs button {
+    transition:
+      transform 280ms var(--ease-flow),
+      background-color 180ms ease,
+      border-color 180ms ease;
+  }
+  .button:active:not(:disabled),
+  .wallet-option:active:not(:disabled),
+  .theme-trigger:active,
+  .nav-toggle:active,
+  .action-tabs button:active:not(:disabled) {
+    transform: scale(0.975);
+  }
+  .theme-trigger[aria-expanded="true"] > svg:last-child {
+    transform: rotate(180deg);
+  }
+  .theme-trigger > svg:last-child,
+  .condition-list summary > svg {
+    transition: transform 320ms var(--ease-flow);
+  }
+  .theme-options,
+  .nav.open {
+    transform-origin: top right;
+    animation: liquid-menu 260ms var(--ease-flow) both;
+  }
+  .wallet-dialog[open] {
+    animation: liquid-dialog 340ms var(--ease-flow) both;
+  }
+  .wallet-dialog[open]::backdrop {
+    animation: backdrop-enter 260ms ease-out;
+  }
+  @supports (interpolate-size: allow-keywords) {
+    .condition-list details {
+      interpolate-size: allow-keywords;
+    }
+    .condition-list details::details-content {
+      block-size: 0;
+      opacity: 0;
+      overflow: clip;
+      transition:
+        block-size 380ms var(--ease-flow),
+        opacity 200ms ease,
+        content-visibility 380ms allow-discrete;
+    }
+    .condition-list details[open]::details-content {
+      block-size: auto;
+      opacity: 1;
+    }
+    .condition-list details[open] p {
+      animation: none;
+    }
+  }
+}
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .button:hover:not(:disabled),
+  .wallet-option:hover:not(:disabled) {
+    transform: translateY(-2px);
+  }
+  .button:focus-visible,
+  .wallet-option:focus-visible {
+    transform: none;
+  }
+}
+@keyframes flow-current {
+  to {
+    stroke-dashoffset: -512;
+  }
+}
+@keyframes page-leave {
+  to {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+@keyframes page-arrive {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+@keyframes liquid-menu {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.97);
+  }
+}
+@keyframes liquid-dialog {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.98);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  @view-transition {
+    navigation: none;
+  }
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after,
+  *::details-content {
+    animation: none !important;
+    transition: none !important;
+  }
+}

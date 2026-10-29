@@ -20,6 +20,10 @@ const surfaces = [
   ".activity-row",
   ".empty-state",
   ".page-heading",
+  ".tools-page > .tool-panel",
+  ".tools-page > .tool-route",
+  ".tools-page > .tool-actions",
+  ".watch-row",
   ".contract-grid > section",
 ].join(",");
 
@@ -32,6 +36,15 @@ export function usePageMotion(path: string) {
     const preference = matchMedia("(prefers-reduced-motion: reduce)");
     const seen = new WeakSet<Element>();
     const active = new Map<Element, Animation>();
+    const flows = new Set<Element>();
+    const flowing = new Set<Element>();
+    const updateFlows = () => {
+      for (const flow of flows)
+        flow.setAttribute(
+          "data-flowing",
+          String(!preference.matches && !document.hidden && flowing.has(flow)),
+        );
+    };
     const finish = () => {
       active.forEach((animation) => animation.cancel());
       active.clear();
@@ -40,6 +53,12 @@ export function usePageMotion(path: string) {
       (entries) => {
         let order = 0;
         for (const entry of entries) {
+          if (entry.target.matches(".hero-flow")) {
+            if (entry.isIntersecting) flowing.add(entry.target);
+            else flowing.delete(entry.target);
+            updateFlows();
+            continue;
+          }
           if (!entry.isIntersecting) continue;
           observer.unobserve(entry.target);
           if (
@@ -53,9 +72,9 @@ export function usePageMotion(path: string) {
               { opacity: 1, transform: "translateY(0)" },
             ],
             {
-              duration: 440,
-              delay: Math.min(order++ * 45, 135),
-              easing: "cubic-bezier(.2,.7,.2,1)",
+              duration: 520,
+              delay: Math.min(order++ * 55, 165),
+              easing: "cubic-bezier(.22,1,.36,1)",
               fill: "backwards",
             },
           );
@@ -67,6 +86,13 @@ export function usePageMotion(path: string) {
       { threshold: 0.08 },
     );
     const register = (node: Element) => {
+      const flowCandidates = node.matches(".hero-flow") ? [node] : [];
+      flowCandidates.push(...node.querySelectorAll(".hero-flow"));
+      for (const flow of flowCandidates) {
+        if (flows.has(flow)) continue;
+        flows.add(flow);
+        observer.observe(flow);
+      }
       const candidates = node.matches(surfaces) ? [node] : [];
       candidates.push(...node.querySelectorAll(surfaces));
       for (const target of candidates) {
@@ -92,18 +118,20 @@ export function usePageMotion(path: string) {
       });
     };
     const changed = () => {
+      updateFlows();
       if (preference.matches) {
-        observer.disconnect();
         finish();
       }
     };
     document.body.addEventListener("focusin", focused);
+    document.addEventListener("visibilitychange", updateFlows);
     preference.addEventListener("change", changed);
     return () => {
       observer.disconnect();
       mutations.disconnect();
       finish();
       document.body.removeEventListener("focusin", focused);
+      document.removeEventListener("visibilitychange", updateFlows);
       preference.removeEventListener("change", changed);
     };
   }, [path]);

@@ -6,4 +6,8 @@ The current palette is black `#000000`, red `#EB4134` and grey `#DEDEDE`. Light 
 
 `src/liquid.css` composes the interface around flowing section edges, a shared path through the withdrawal illustration, overlapping explanation surfaces and a connected vault selection/editor. Responsive spacing and type keep that hierarchy across the workspace, tools, reviews and receipts. Navigation uses a visible current-page marker; transaction filters wrap at narrow widths. Surface tones derive from the original palette, while fixed coral and inverted surfaces retain their readable text and focus colours.
 
+Motion connects real document navigation with short view transitions in supporting browsers. Section reveals follow viewport entry once, including newly mounted tools/reviews; keyboard focus cancels a moving surface immediately. The illustrated currents run only while visible in the active tab. Native condition details expand and collapse smoothly where intrinsic-size transitions are available, with ordinary native details as the fallback. Menus, the wallet dialog and hover/press feedback share the same easing. Financial amounts retain their actual values throughout.
+
+Reduced motion disables document transitions, decorative currents, CSS animation and smooth scrolling, and cancels active section reveals. Motion is progressive enhancement: content and navigation remain available when its APIs are absent.
+
 The global network/ledger strip and circular minimum-return hero badge have been removed. Contextual network labels remain where a user reviews actual testnet activity. Live values still come from the service and ledger. Theme selection and reduced-motion behavior are retained.
