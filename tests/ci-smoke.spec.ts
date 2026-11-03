@@ -6,7 +6,7 @@ for (const width of [320, 768, 1440]) {
     test(`workspace navigation and wallet chooser at ${width} in ${theme}`, async ({ page }) => {
       await page.setViewportSize({ width, height: 1000 });
       await page.emulateMedia({ colorScheme: theme, reducedMotion: "reduce" });
-      // CI checks the disconnected interface. Live chain and signed journeys remain separate acceptance.
+      // These smoke cases complement the signed-flow regressions in ci-security.spec.ts.
       await page.route("https://soroban-testnet.stellar.org/**", route => route.abort());
       const errors: string[] = [];
       page.on("pageerror", error => errors.push(error.message));

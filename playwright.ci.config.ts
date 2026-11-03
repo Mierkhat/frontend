@@ -2,7 +2,7 @@ import { defineConfig } from "@playwright/test";
 
 export default defineConfig({
   testDir: "./tests",
-  testMatch: "ci-smoke.spec.ts",
+  testMatch: ["ci-smoke.spec.ts", "ci-security.spec.ts"],
   timeout: 30000,
   workers: 2,
   use: {
