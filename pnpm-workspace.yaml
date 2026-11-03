@@ -4,3 +4,8 @@ packages:
 allowBuilds:
   esbuild: true
   sharp: true
+
+# Patch audited transitive runtime dependencies consistently across workspaces.
+overrides:
+  zod: 4.6.7
+  follow-redirects: 1.16.2
