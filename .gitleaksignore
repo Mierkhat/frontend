@@ -1,0 +1,5 @@
+# Reviewed historical false positives: public contract addresses, auth digests and ledger-key XDR.
+# Exact commit/file/rule/line fingerprints only; new findings remain blocked.
+49170b8f4cef61757ed1bc4c22edce996e2232e6:artifacts/redemption-output-check.json:generic-api-key:11
+49170b8f4cef61757ed1bc4c22edce996e2232e6:artifacts/redemption-output-check.json:generic-api-key:27
+49170b8f4cef61757ed1bc4c22edce996e2232e6:artifacts/redemption-output-check.json:generic-api-key:43
