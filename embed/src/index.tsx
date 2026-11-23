@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { t } from "@mierkhat/copy";
+import { t, type CopyKey } from "@mierkhat/copy";
 import {
   ExitController,
+  MierkhatError,
   formatAmount,
   intentHash,
   persistPending,
@@ -33,21 +34,27 @@ export interface MierkhatReviewProps {
 export function MierkhatReview(props: MierkhatReviewProps) {
   const controller = useRef(new ExitController()),
     generation = useRef(0),
-    lastMinimum = useRef<bigint | undefined>(undefined);
+    lastMinimum = useRef<bigint | undefined>(undefined),
+    flight = useRef(false), sending = useRef(false), terminal = useRef(false);
   const [review, setReview] = useState<Review>(),
     [status, setStatus] = useState("editing"),
     [pending, setPending] = useState<PendingPointer>(),
-    [unsent, setUnsent] = useState<SignedAttempt>(),
+    [unsent, setUnsent] = useState<{ attempt: SignedAttempt; pointer: PendingPointer }>(),
+    [retry, setRetry] = useState<{ attempt: SignedAttempt; pointer: PendingPointer }>(),
+    [error, setError] = useState<CopyKey>(),
     [confirmed, setConfirmed] = useState(false);
-  const bundle = validateBundle(props.deployment);
-  validateIntent(props.draft, bundle);
+  const [signedContext, setSignedContext] = useState<{ bundle: DeploymentBundle; review: Review }>();
+  const bundle = validateBundle(signedContext?.bundle ?? props.deployment);
+  const shownDraft = signedContext?.review.draft ?? props.draft;
+  const shownReview = signedContext?.review ?? review;
+  validateIntent(shownDraft, bundle);
   const token = bundle.tokens.find(
     (t) => t.address === bundle.profile.settlement,
   )!;
   const migration = bundle.migration,
-    bounds = props.draft.intent.migration;
+    bounds = shownDraft.intent.migration;
   const currentMinimum =
-    bounds?.min_destination_shares ?? props.draft.intent.min_receive;
+    bounds?.min_destination_shares ?? shownDraft.intent.min_receive;
   const lowered =
     lastMinimum.current !== undefined &&
     BigInt(currentMinimum) < lastMinimum.current;
@@ -55,6 +62,7 @@ export function MierkhatReview(props: MierkhatReviewProps) {
     controller.current.setDraft(props.draft);
     setReview(undefined);
     setConfirmed(false);
+    setError(undefined);
     if (!pending) setStatus("editing");
     return () => {
       generation.current++;
@@ -73,8 +81,11 @@ export function MierkhatReview(props: MierkhatReviewProps) {
         () => props.lookup(pending.hash),
         abort.signal,
       )) {
-        setStatus(value.state);
+        if (!sending.current || value.state === "succeeded" || value.state === "failed") setStatus(value.state);
         if (value.state === "succeeded" || value.state === "failed") {
+          terminal.current = true;
+          setRetry(undefined);
+          setUnsent(undefined);
           props.onReceipt(value);
           return;
         }
@@ -83,13 +94,30 @@ export function MierkhatReview(props: MierkhatReviewProps) {
     return () => abort.abort();
   }, [pending?.hash]);
   async function send(attempt: SignedAttempt, pointer: PendingPointer) {
+    if (sending.current || terminal.current) return;
+    sending.current = true;
     setUnsent(undefined);
+    setRetry({ attempt, pointer });
     setPending(pointer);
     setStatus("pending");
     try {
       await props.submit(attempt);
+      setRetry(undefined);
     } catch {
-      setStatus("unknown");
+      if (!terminal.current) setStatus("unknown");
+    } finally { sending.current = false; }
+  }
+  async function prepareReview() {
+    const prompt = generation.current;
+    setError(undefined); setConfirmed(false); setReview(undefined); setStatus("preparing");
+    controller.current.setDraft(props.draft);
+    const candidate = await controller.current.prepare(async draft => {
+      await props.verifyDeployment();
+      return verifyReview(await props.prepare(draft), draft, bundle, await props.ledger());
+    });
+    if (candidate && prompt === generation.current) {
+      setReview(candidate); setStatus("review");
+      lastMinimum.current = BigInt(candidate.draft.intent.migration?.min_destination_shares ?? candidate.draft.intent.min_receive);
     }
   }
   return (
@@ -106,7 +134,7 @@ export function MierkhatReview(props: MierkhatReviewProps) {
         <dt>{t("contracts.asset")}</dt>
         <dd>{migration ? migration.destination.address : token.address}</dd>
         <dt>{t("action.shares")}</dt>
-        <dd>{formatAmount(props.draft.intent.shares, bundle.shareDecimals)}</dd>
+        <dd>{formatAmount(shownDraft.intent.shares, bundle.shareDecimals)}</dd>
         <dt>{t(migration ? "migration.minimum" : "action.minimum")}</dt>
         <dd>
           {formatAmount(
@@ -116,7 +144,7 @@ export function MierkhatReview(props: MierkhatReviewProps) {
           {migration ? t("app.shares_unit") : token.symbol}
         </dd>
         <dt>{t("action.recipient")}</dt>
-        <dd>{props.draft.intent.recipient}</dd>
+        <dd>{shownDraft.intent.recipient}</dd>
         <dt>{t("route.contracts")}</dt>
         <dd>{bundle.guard}</dd>
         <dd>{bundle.profile.vault.address}</dd>
@@ -131,11 +159,11 @@ export function MierkhatReview(props: MierkhatReviewProps) {
         <dt>{t("review.expiry")}</dt>
         <dd>
           {t("app.expiry_ledger", {
-            ledger: props.draft.intent.valid_before_ledger,
+            ledger: shownDraft.intent.valid_before_ledger,
           })}
         </dd>
         <dd>
-          {t("app.expiry_time", { time: props.draft.intent.valid_before_time })}
+          {t("app.expiry_time", { time: new Date(Number(shownDraft.intent.valid_before_time) * 1000).toISOString() })}
         </dd>
         <dt>{t("redemption.internal_details")}</dt>
         <dd>
@@ -163,7 +191,7 @@ export function MierkhatReview(props: MierkhatReviewProps) {
               <dd>
                 {t("review.withdraw_minima")}:{" "}
                 {formatAmount(
-                  props.draft.intent.min_withdraw[n]!,
+                  shownDraft.intent.min_withdraw[n]!,
                   underlying.decimals,
                 )}{" "}
                 {underlying.symbol}
@@ -175,7 +203,7 @@ export function MierkhatReview(props: MierkhatReviewProps) {
                   <>
                     {t("redemption.swap_minimum", { token: token.symbol })}:{" "}
                     {formatAmount(
-                      props.draft.intent.min_swap[n]!,
+                      shownDraft.intent.min_swap[n]!,
                       token.decimals,
                     )}{" "}
                     {token.symbol}
@@ -185,24 +213,25 @@ export function MierkhatReview(props: MierkhatReviewProps) {
             </div>
           );
         })}
-        {review && (
+        {shownReview && (
           <>
             <dt>{t("action.expected")}</dt>
             <dd>
               {formatAmount(
                 migration
-                  ? review.expectedDestinationSharesRaw!
-                  : review.expectedReceiveRaw,
+                  ? shownReview.expectedDestinationSharesRaw!
+                  : shownReview.expectedReceiveRaw,
                 migration ? migration.destinationShareDecimals : token.decimals,
               )}{" "}
               {migration ? t("app.shares_unit") : token.symbol}
             </dd>
             <dt>{t("fee.maximum")}</dt>
-            <dd>{formatAmount(review.feeMaximumStroops, 7)} XLM</dd>
+            <dd>{formatAmount(shownReview.feeMaximumStroops, 7)} XLM</dd>
           </>
         )}
       </dl>
       <p>{t("review.failure_fee")}</p>
+      {!pending && !unsent && <p>{t("embed.freshness")}</p>}
       {pending && (
         <p>
           {t("receipt.hash")}: <code>{pending.hash}</code>
@@ -223,103 +252,80 @@ export function MierkhatReview(props: MierkhatReviewProps) {
                     ? t("service.unavailable")
                     : ""}
       </p>
-      {lowered && (
+      {error && <p role="alert">{t(error)}</p>}
+      {review && !pending && !unsent && (
         <label>
           <input
             type="checkbox"
             checked={confirmed}
             onChange={(e) => setConfirmed(e.target.checked)}
           />
-          {t("app.minimum_confirm")}
+          {t(lowered ? "app.minimum_confirm" : "review.confirm")}
         </label>
       )}
       {unsent && (
         <div>
           <p>{t("app.storage_before_send")}</p>
           <a
-            href={`/receipt/${unsent.txHash}?environment=${bundle.environment}`}
+            href={`/receipt/${unsent.attempt.txHash}?environment=${unsent.pointer.environment}`}
           >
             {t("pending.recovery_link")}
           </a>
           <button
             onClick={() =>
-              send(unsent, {
-                environment: bundle.environment,
-                epoch: bundle.epoch,
-                hash: unsent.txHash,
-                intentHash: review!.intentHash,
-                createdAt: new Date().toISOString(),
-              })
+              send(unsent.attempt, unsent.pointer)
             }
           >
             {t("app.storage_continue")}
           </button>
         </div>
       )}
+      {retry && !terminal.current && status === "unknown" && <button onClick={() => void send(retry.attempt, retry.pointer)}>
+        {t("embed.retry")}</button>}
+      {review && !pending && !unsent && <button disabled={status === "preparing" || status === "signing"}
+        onClick={async () => {
+          if (flight.current) return;
+          flight.current = true;
+          try { await prepareReview(); }
+          catch (e) { setError(e instanceof MierkhatError ? e.copyKey as CopyKey : "service.unavailable"); setStatus("unavailable"); }
+          finally { flight.current = false; }
+        }}>{t("review.refresh")}</button>}
       <button
         disabled={
           status === "preparing" ||
           status === "signing" ||
           !!pending ||
           !!unsent ||
-          (lowered && !confirmed)
+          (!!review && !confirmed)
         }
         onClick={async () => {
+          if (flight.current || pending || unsent) return;
+          flight.current = true;
           const prompt = generation.current;
           try {
-            if (!review) {
-              setStatus("preparing");
-              const candidate = await controller.current.prepare(
-                async (draft) => {
-                  await props.verifyDeployment();
-                  return verifyReview(
-                    await props.prepare(draft),
-                    draft,
-                    bundle,
-                    await props.ledger(),
-                  );
-                },
-              );
-              if (candidate && prompt === generation.current) {
-                setReview(candidate);
-                setStatus("review");
-                lastMinimum.current = BigInt(
-                  candidate.draft.intent.migration?.min_destination_shares ??
-                    candidate.draft.intent.min_receive,
-                );
-              }
-            } else {
-              setStatus("signing");
-              const attempt = await controller.current.signExit(
-                review,
-                bundle,
-                props.wallet,
-                props.ledger,
-                props.verifyDeployment,
-              );
+            if (!review) await prepareReview();
+            else {
+              if (!confirmed) return;
+              setError(undefined); setStatus("signing");
+              const attempt = await controller.current.signExit(review, bundle, props.wallet, props.ledger, props.verifyDeployment);
               if (attempt && prompt === generation.current) {
-                const pointer = {
-                  environment: bundle.environment,
-                  epoch: bundle.epoch,
-                  hash: attempt.txHash,
-                  intentHash: review.intentHash,
-                  createdAt: new Date().toISOString(),
-                };
+                setSignedContext({ bundle, review: attempt.review });
+                const pointer = { environment: bundle.environment, epoch: bundle.epoch, hash: attempt.txHash,
+                  intentHash: review.intentHash, createdAt: new Date().toISOString() };
                 let saved = false;
-                try {
-                  saved = persistPending(pointer, localStorage);
-                } catch {}
-                if (!saved) {
-                  setUnsent(attempt);
-                  setStatus("review");
-                  return;
-                }
+                try { saved = persistPending(pointer, localStorage); } catch {}
+                if (!saved) { setUnsent({ attempt, pointer }); setStatus("review"); return; }
                 await send(attempt, pointer);
               }
             }
-          } catch {
-            if (prompt === generation.current) setStatus("unavailable");
-          }
+          } catch (e) {
+            if (prompt === generation.current) {
+              setError(e instanceof MierkhatError ? e.copyKey as CopyKey : "service.unavailable");
+              setConfirmed(false);
+              if (e instanceof MierkhatError && ["review.stale", "review.expired"].includes(e.copyKey)) setReview(undefined);
+              setStatus("unavailable");
+            }
+          } finally { flight.current = false; }
         }}
       >
         {review ? t("action.sign") : t("review.refresh")}

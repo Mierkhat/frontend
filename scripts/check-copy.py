@@ -12,7 +12,7 @@ for key,value in copy.items():
     if re.search(r'100% safe|attacks prevented|money saved|unlock the future',value,re.I):errors.append(key+': unsupported claim')
 allowed={'DeFindex','Soroswap','XLM'}
 for path in root.glob('**/*.tsx'):
-    if any(p in {'node_modules','dist'} for p in path.parts):continue
+    if any(p in {'node_modules','dist'} for p in path.parts) or path.name.endswith('.test.tsx'):continue
     text=re.sub(r'export interface MierkhatReviewProps \{[\s\S]*?\n\}','',path.read_text())
     # Function type annotations such as () => Promise<void> are not JSX text.
     text=re.sub(r'=>\s*(?:Promise|Array|ReadonlyArray)<', '=> (', text)

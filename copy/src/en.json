@@ -405,7 +405,7 @@
   "redemption.internal_flow": "The vault releases {assets} inside the transaction. Those proceeds are converted to {token} before payment.",
   "redemption.direct": "This vault already holds {token}, so no swap is needed.",
   "redemption.internal_details": "Vault redemption and swap details",
-  "redemption.internal_note": "These amounts describe the vault’s internal redemption and swaps. The final payment is {token}.",
+  "redemption.internal_note": "These amounts describe the vault\u2019s internal redemption and swaps. The final payment is {token}.",
   "redemption.from_vault": "Released by the vault",
   "redemption.contribution": "Contribution in {token}",
   "redemption.estimated_wallet": "Estimated {token} to your wallet",
@@ -559,5 +559,7 @@
   "watch.loading": "Loading your saved alerts",
   "watch.saving": "Saving this alert",
   "watch.updating": "Updating this alert",
-  "watch.notification_failed": "Browser notifications could not be enabled. Your alerts remain available on this page."
+  "watch.notification_failed": "Browser notifications could not be enabled. Your alerts remain available on this page.",
+  "embed.retry": "Retry this signed transaction",
+  "embed.freshness": "Review freshness is checked again before the wallet opens. Refresh to check the amounts and fee again."
 }

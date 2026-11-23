@@ -47,6 +47,7 @@ jobs:
       - run: pnpm audit --prod --audit-level high
       - run: pnpm build
       - run: pnpm typecheck
+      - run: pnpm typecheck:tests
       - run: pnpm test
       - run: pnpm --filter @mierkhat/copy typecheck
       - run: pnpm --filter @mierkhat/react typecheck
