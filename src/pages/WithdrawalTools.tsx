@@ -7,10 +7,11 @@ import {
 } from "@mierkhat/sdk";
 import { bundles, knownDeployments, request } from "../api.js";
 import { t } from "../copy.js";
-import { ErrorNotice, PageHeading } from "../components/Shared.js";
+import { Busy, ErrorNotice, PageHeading } from "../components/Shared.js";
 import { WithdrawalReadiness } from "../components/WithdrawalReadiness.js";
 import {
   readWatchAccess,
+  removeWatchAccess,
   readWatch,
   type WatchAccess,
   type WatchState,
@@ -93,77 +94,73 @@ export function Alerts() {
       { access: WatchAccess; state?: WatchState; error?: unknown }[]
     >([]),
     [error, setError] = useState<unknown>(),
-    [busy, setBusy] = useState(false),
-    [permission, setPermission] = useState(false);
-  const notified = useRef(new Set<string>()),
-    mounted = useRef(true);
+    [busy, setBusy] = useState(true),
+    [permission, setPermission] = useState(false),
+    [permissionBusy, setPermissionBusy] = useState(false),
+    [actions, setActions] = useState<Set<string>>(new Set());
+  const notified = useRef(new Set<string>()), mounted = useRef(true),
+    generation = useRef(0), readFlight = useRef(false), queuedRefresh = useRef(false), actionFlight = useRef(new Set<string>());
   async function refresh() {
+    if (readFlight.current || actionFlight.current.size) return;
+    readFlight.current = true;
+    const g = ++generation.current;
     setBusy(true);
     try {
-      const access = readWatchAccess();
-      const loaded = await Promise.all(
-        access.map(async (a) => {
-          try {
-            return { access: a, state: await readWatch(a) };
-          } catch (error) {
-            return { access: a, error };
+      const loaded = await Promise.all(readWatchAccess().map(async a => {
+        try { return { access: a, state: await readWatch(a) }; }
+        catch (error) { return { access: a, error }; }
+      }));
+      if (!mounted.current || g !== generation.current) return;
+      setRows(loaded); setError(undefined);
+      if (typeof Notification !== "undefined" && Notification.permission === "granted") {
+        for (const r of loaded) for (const n of r.state?.notifications ?? []) {
+          if (!n.seen_at && !notified.current.has(n.id)) {
+            try { new Notification(t("watch.alert_title"), { tag: n.id }); notified.current.add(n.id); }
+            catch { setPermission(true); }
           }
-        }),
-      );
-      if (mounted.current) {
-        setRows(loaded);
-        setError(undefined);
+        }
       }
-      if (
-        typeof Notification !== "undefined" &&
-        Notification.permission === "granted"
-      )
-        for (const r of loaded)
-          for (const n of r.state?.notifications ?? []) {
-            if (!n.seen_at && !notified.current.has(n.id)) {
-              notified.current.add(n.id);
-              new Notification(t("watch.alert_title"), { tag: n.id });
-            }
-          }
-    } catch (e) {
-      if (mounted.current) setError(e);
-    } finally {
-      if (mounted.current) setBusy(false);
+    } catch (e) { if (mounted.current && g === generation.current) setError(e); }
+    finally {
+      readFlight.current = false;
+      if (mounted.current && g === generation.current) setBusy(false);
+      if (mounted.current && queuedRefresh.current && !actionFlight.current.size) { queuedRefresh.current = false; void refresh(); }
     }
   }
   useEffect(() => {
-    mounted.current = true;
-    void refresh();
+    mounted.current = true; void refresh();
     const timer = setInterval(() => void refresh(), 30000);
-    return () => {
-      mounted.current = false;
-      clearInterval(timer);
-    };
+    return () => { mounted.current = false; generation.current++; clearInterval(timer); };
   }, []);
   async function action(a: WatchAccess, op: string, body: unknown = {}) {
+    if (actionFlight.current.has(a.id)) return;
+    actionFlight.current.add(a.id); generation.current++;
+    setActions(new Set(actionFlight.current)); setError(undefined);
+    let completed = false;
     try {
-      await request("/watches/" + a.id + "/" + op, body, {
-        "X-Watch-Key": a.key,
-      });
-      if (op === "remove")
-        localStorage.setItem(
-          "mierkhat.watches.v1",
-          JSON.stringify(readWatchAccess().filter((v) => v.id !== a.id)),
-        );
-      await refresh();
-    } catch (e) {
-      if (
-        op === "remove" &&
-        e instanceof MierkhatError &&
-        e.code === "NotFound"
-      ) {
-        localStorage.setItem(
-          "mierkhat.watches.v1",
-          JSON.stringify(readWatchAccess().filter((v) => v.id !== a.id)),
-        );
-        await refresh();
-      } else setError(e);
+      try { await request("/watches/" + a.id + "/" + op, body, { "X-Watch-Key": a.key }); }
+      catch (e) { if (!(op === "remove" && e instanceof MierkhatError && e.code === "NotFound")) throw e; }
+      if (op === "remove") await removeWatchAccess(a.id);
+      completed = true;
+    } catch (e) { if (mounted.current) setError(e); }
+    finally {
+      actionFlight.current.delete(a.id);
+      if (mounted.current) {
+        setActions(new Set(actionFlight.current)); setBusy(false);
+        // Wait for any invalidated read before publishing a refreshed list.
+        if (completed) {
+          if (readFlight.current) queuedRefresh.current = true;
+          else await refresh();
+        }
+      }
     }
+  }
+  async function enableNotifications() {
+    if (permissionBusy) return;
+    setPermissionBusy(true);
+    try { setPermission(typeof Notification === "undefined" || await Notification.requestPermission() !== "granted"); }
+    catch { setPermission(true); }
+    finally { if (mounted.current) setPermissionBusy(false); }
   }
   function review(row: WatchState["watch"]) {
     try {
@@ -182,29 +179,26 @@ export function Alerts() {
       <div className="tool-actions">
         <button
           className="button secondary small"
-          disabled={busy}
+          disabled={busy || actions.size > 0}
           onClick={() => void refresh()}
         >
           {t("watch.refresh")}
         </button>
         <button
           className="text-button"
-          onClick={() => {
-            if (typeof Notification === "undefined") setPermission(true);
-            else
-              void Notification.requestPermission().then((p) =>
-                setPermission(p !== "granted"),
-              );
-          }}
+          disabled={permissionBusy}
+          onClick={() => void enableNotifications()}
         >
           {t("watch.permission")}
         </button>
       </div>
       <p className="fine-print">
-        {t(permission ? "watch.permission_denied" : "watch.permission_note")}
+        {t(permission ? "watch.notification_failed" : "watch.permission_note")}
       </p>
       <ErrorNotice error={error} />
-      {!rows.length && !busy && <p>{t("watch.empty")}</p>}
+      {busy && !rows.length && <Busy label={t("watch.loading")} />}
+      {!rows.length && !busy && !error && <div className="empty-state"><p>{t("watch.empty")}</p>
+        <a className="button secondary" href="/withdrawals">{t("readiness.check")}</a></div>}
       {rows.map(({ access, state, error }) => {
         const b = knownDeployments.find((b) => b.epoch === state?.watch.epoch),
           m = state?.watch.kind === "migration",
@@ -213,7 +207,8 @@ export function Alerts() {
             : b?.tokens.find((t) => t.address === b.profile.settlement)
                 ?.decimals;
         return (
-          <section className="tool-panel watch-card" key={access.id}>
+          <section className="tool-panel watch-card" key={access.id} aria-busy={actions.has(access.id)}>
+            {actions.has(access.id) && <Busy label={t("watch.updating")} />}
             <h2>{b ? b.vaultName : t("watch.load_failed")}</h2>
             <ErrorNotice error={error} />
             {state && (
@@ -253,12 +248,14 @@ export function Alerts() {
                 )}
                 <button
                   className="button small"
+                  disabled={actions.has(access.id)}
                   onClick={() => review(state.watch)}
                 >
                   {t("watch.open")}
                 </button>
                 <button
                   className="text-button"
+                  disabled={actions.has(access.id)}
                   onClick={() => void action(access, "rearm")}
                 >
                   {t("watch.rearm")}
@@ -272,6 +269,7 @@ export function Alerts() {
                     {!n.seen_at && (
                       <button
                         className="text-button"
+                        disabled={actions.has(access.id)}
                         onClick={() =>
                           void action(access, "seen", { notification: n.id })
                         }
@@ -285,6 +283,7 @@ export function Alerts() {
             )}
             <button
               className="text-button"
+              disabled={actions.has(access.id)}
               onClick={() => void action(access, "remove")}
             >
               {t("watch.remove")}
