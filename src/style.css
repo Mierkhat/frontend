@@ -808,7 +808,7 @@ svg {
 .notice {
   padding: 18px 20px;
   background: var(--soft);
-  border-left: 3px solid var(--strong-line);
+  border: 1px solid var(--strong-line);
   font-size: 0.87rem;
   line-height: 1.6;
   margin-bottom: 24px;

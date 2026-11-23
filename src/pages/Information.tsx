@@ -68,7 +68,7 @@ export function Help() {
       <PageHeading title={t("help.title")} intro={t("app.help_intro")} />
       <div className="condition-list">
         {questions.map(([q, a]) => (
-          <details key={q} id={q === "help.testnet" ? "testnet" : undefined}>
+          <details key={q} id={q === "help.testnet" ? "testnet" : undefined} open={q === "help.testnet" && location.hash === "#testnet" ? true : undefined}>
             <summary>
               <span>{t(q)}</span>
               <ChevronDown {...icon} />
