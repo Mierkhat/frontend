@@ -7,6 +7,10 @@ Mierkhat lets you withdraw DeFindex vault shares and receive one settlement toke
 
 This repository contains the React application, shared interface copy and optional React review embed. It uses the actual pinned Stellar testnet deployment. Balances, quotes, submissions and receipts come from real services and ledger data. Mainnet is disabled. Testnet tokens have no monetary value.
 
+## Post-rejection review
+
+See [the review plan](docs/REVIEW_PLAN.md) and [completed changes and verification](docs/RESUBMISSION.md) for this update against the rejected submission. Vercel is currently paused; use localhost for review.
+
 ## Stack
 
 | Component          | Technology                                               |
@@ -60,7 +64,7 @@ pnpm exec playwright install --with-deps chromium
 pnpm test:e2e
 ```
 
-Playwright builds the app and serves it on port 4173. Its 14 scenarios cover both themes, mobile widths, live ledger reads, navigation, wallet selection, keyboard controls, recovery and receipts. It does not intercept the network. CI runs build, types and unit tests; live browser acceptance is a separate integration check.
+Playwright builds the app and serves it on port 4173. Its 14 scenarios cover both themes, mobile widths, live ledger reads, navigation, wallet selection, keyboard controls, recovery and receipts. It does not intercept the network. CI runs build, app/copy/embed/test types, 14 unit/component tests and six disconnected Chromium navigation/focus checks; fresh signed-wallet acceptance remains separate.
 
 ## Repository layout
 

@@ -124,3 +124,10 @@ as such and cannot establish genuine Freighter acceptance.
 The hosted-service pause, issuer credentials, partner acceptance and independent
 review are external dependencies. They must not be replaced with made-up data or
 reported as finished software work.
+
+## Finding added during local verification
+
+The backend local launcher stopped PostgreSQL before the API's worker drain
+finished. An awaited idempotent shutdown and safe idle-connection error handling
+were added after documenting the finding in the backend plan. The completed
+implementation and local restart results are recorded in RESUBMISSION.md.
