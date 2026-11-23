@@ -12,7 +12,7 @@
     "prebuild": "pnpm --filter @mierkhat/copy build && pnpm --filter @mierkhat/react build"
   },
   "dependencies": {
-    "@mierkhat/sdk": "file:.vendor/mierkhat-sdk-0.1.0-c88163fc2a35.tgz",
+    "@mierkhat/sdk": "file:.vendor/mierkhat-sdk-0.1.0-0a5cad9767d9.tgz",
     "@stellar/freighter-api": "6.0.1",
     "react": "19.3.1",
     "react-dom": "19.3.1",

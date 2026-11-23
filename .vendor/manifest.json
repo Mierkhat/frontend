@@ -2,8 +2,8 @@
   "package": "@mierkhat/sdk",
   "version": "0.1.0",
   "source_repository": "https://github.com/Mierkhat/backend",
-  "source_combined_commit": "86c8f0c934cfe0a8f7a257511df8768eb945fb1b",
-  "source_sdk_tree": "c88163fc2a354ade85b1c77abaae7fbb7f12b806",
-  "archive": "mierkhat-sdk-0.1.0-c88163fc2a35.tgz",
-  "sha256": "07521d5907887a75ab39bcef75b822cf3179194d74a741339498bbdc1c3ee155"
+  "source_sdk_tree": "0a5cad9767d91f0e5aa9e8eed394fe348b09ef34",
+  "archive": "mierkhat-sdk-0.1.0-0a5cad9767d9.tgz",
+  "sha256": "919bea6176151f285df1501e67d31ab5d18c4215567195ca98edf95732906975",
+  "source_commit": "f651c25e9e3cfab9b2581efb3049003dd2526861"
 }
