@@ -23,6 +23,8 @@ import {
   PageHeading,
 } from "../components/Shared.js";
 import { SubmissionRecovery } from "../components/SubmissionRecovery.js";
+import { AmountField } from "../components/AmountField.js";
+import { validateAmount } from "../validation.js";
 import { MigrationReviewPanel } from "../components/MigrationReview.js";
 import { WatchButton } from "../components/Watches.js";
 import type { WalletIdentity } from "./Workspace.js";
@@ -306,47 +308,18 @@ export function Migration({
                   />
                 ) : (
                   <>
-                    <label className="amount-field">
-                      <span>
-                        {t("migration.shares")}
-                        <button
-                          className="text-button"
-                          disabled={locked || !account?.sharesRaw}
-                          onClick={() => {
-                            invalidate();
-                            setQuote(undefined);
-                            setShares(
-                              formatAmount(
-                                account!.sharesRaw!,
-                                b.shareDecimals,
-                              ),
-                            );
-                          }}
-                        >
-                          {t("action.max")}
-                        </button>
-                      </span>
-                      <div>
-                        <input
-                          inputMode="decimal"
-                          aria-label={t("migration.shares")}
-                          value={shares}
-                          disabled={locked}
-                          onChange={(e) => {
-                            invalidate();
-                            setQuote(undefined);
-                            setShares(e.target.value);
-                            setMinimum("");
-                          }}
-                        />
-                        <b>{t("app.shares_unit")}</b>
-                      </div>
-                    </label>
+                    <AmountField label={t("migration.shares")} value={shares} decimals={b.shareDecimals}
+                      unit={t("app.shares_unit")} balanceRaw={account?.sharesRaw} disabled={locked}
+                      onChange={value => { invalidate(); setQuote(undefined); setShares(value); setMinimum(""); }}
+                      action={<button className="text-button" disabled={locked || !account?.sharesRaw}
+                        onClick={() => { invalidate(); setQuote(undefined); setShares(formatAmount(account!.sharesRaw!, b.shareDecimals)); }}>
+                        {t("action.max")}</button>}
+                    />
                     <button
                       className="button secondary"
                       disabled={
                         locked ||
-                        !shares ||
+                        !!validateAmount(shares, b.shareDecimals, { balanceRaw: account?.sharesRaw }).issue ||
                         !account?.funded ||
                         account.tokens.some((t) => !t.trusted)
                       }
@@ -383,22 +356,9 @@ export function Migration({
                             </dd>
                           </div>
                         </dl>
-                        <label className="amount-field minimum-field">
-                          <span>{t("migration.minimum")}</span>
-                          <div>
-                            <input
-                              inputMode="decimal"
-                              aria-label={t("migration.minimum")}
-                              value={minimum}
-                              disabled={locked}
-                              onChange={(e) => {
-                                invalidate();
-                                setMinimum(e.target.value);
-                              }}
-                            />
-                            <b>{t("app.shares_unit")}</b>
-                          </div>
-                        </label>
+                        <AmountField label={t("migration.minimum")} value={minimum} decimals={m.destinationShareDecimals}
+                          unit={t("app.shares_unit")} maximumRaw={quote.destinationSharesRaw} disabled={locked}
+                          onChange={value => { invalidate(); setMinimum(value); }} />
                         <p>{t("migration.refund_note")}</p>
                         <details>
                           <summary>{t("migration.deposit")}</summary>
@@ -428,7 +388,7 @@ export function Migration({
                         <div className="tool-actions">
                           <button
                             className="button"
-                            disabled={locked || !minimum}
+                            disabled={locked || !!validateAmount(minimum, m.destinationShareDecimals, { maximumRaw: quote.destinationSharesRaw }).issue}
                             onClick={() => void prepare()}
                           >
                             {t("migration.review")}

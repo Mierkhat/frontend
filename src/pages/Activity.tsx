@@ -81,6 +81,8 @@ export function Activity() {
               setInvalid(false);
             }}
             aria-label={t("activity.hash_label")}
+            aria-invalid={invalid || undefined}
+            aria-describedby={invalid ? "lookup-error" : undefined}
             maxLength={64}
           />
           <button className="button" type="submit">
@@ -89,7 +91,7 @@ export function Activity() {
           </button>
         </div>
         {invalid && (
-          <p role="alert" className="field-error">
+          <p id="lookup-error" role="alert" className="field-error">
             {t("input.hash_required")}
           </p>
         )}
@@ -167,7 +169,8 @@ export function ReceiptPage({
   const [observation, setObservation] = useState<Observation>(),
     [checking, setChecking] = useState(true),
     [saved, setSaved] = useState(true),
-    [copied, setCopied] = useState(false);
+    [copied, setCopied] = useState(false),
+    [error, setError] = useState<unknown>();
   const valid = hashSchema.safeParse(hash).success;
   const [record] = useState<RecoveryRecord>(
     () =>
@@ -196,6 +199,7 @@ export function ReceiptPage({
     }
     const abort = new AbortController();
     void (async () => {
+      try {
       for await (const o of watchExit(
         hash,
         () => api.status(hash),
@@ -211,11 +215,15 @@ export function ReceiptPage({
           rememberObservation(record, o, localStorage);
         } catch {}
       }
+      } catch (e) {
+        if (!abort.signal.aborted) { setError(e); setChecking(false); }
+      }
     })();
     return () => abort.abort();
   }, [hash]);
   async function refresh() {
     setChecking(true);
+    setError(undefined);
     try {
       const o = await api.status(hash);
       setObservation((prior) =>
@@ -226,6 +234,8 @@ export function ReceiptPage({
       try {
         rememberObservation(record, o, localStorage);
       } catch {}
+    } catch (e) {
+      setError(e);
     } finally {
       setChecking(false);
     }
@@ -346,6 +356,7 @@ export function ReceiptPage({
           </div>
         </section>
       )}
+      <ErrorNotice error={error} />
       <section className="receipt-paper">
         <Identity label={t("receipt.hash")} value={hash} />
         <dl className="review-facts">

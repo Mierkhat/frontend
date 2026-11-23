@@ -43,14 +43,14 @@ export async function request<T>(
     signal: AbortSignal.timeout(45000),
   });
   if (!r.ok) {
-    let e: { code?: string; copyKey?: string } = {};
+    let e: { code?: string; copyKey?: string; retryable?: boolean } = {};
     try {
       e = await r.json();
     } catch {}
     throw new MierkhatError(
       e.code ?? "Unavailable",
-      e.copyKey ?? "service.unavailable",
-      r.status >= 500,
+      r.status === 402 ? "service.host_paused" : r.status === 429 ? "service.rate_limited" : e.copyKey ?? "service.unavailable",
+      e.retryable === true || r.status >= 500 || r.status === 429,
     );
   }
   return r.json() as Promise<T>;

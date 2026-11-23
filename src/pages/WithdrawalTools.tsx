@@ -39,7 +39,7 @@ export function WithdrawalTools({
           if (parsed.success) {
             setError(undefined);
             setOwner(parsed.data);
-          } else setError(new MierkhatError("Address", "input.invalid"));
+          } else setError(new MierkhatError("Address", "input.address"));
         }}
       >
         <label>
@@ -49,7 +49,10 @@ export function WithdrawalTools({
             onChange={(e) => {
               setAddress(e.target.value);
               setOwner("");
+              setError(undefined);
             }}
+            aria-invalid={!!error || undefined}
+            aria-describedby={error ? "address-error" : undefined}
             autoComplete="off"
             spellCheck={false}
           />
@@ -72,7 +75,7 @@ export function WithdrawalTools({
         <button className="button" type="submit">
           {t("readiness.check")}
         </button>
-        <ErrorNotice error={error} />
+        {!!error && <p id="address-error" className="field-error" role="alert">{t("input.address")}</p>}
       </form>
       {owner && (
         <WithdrawalReadiness

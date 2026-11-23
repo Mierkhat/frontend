@@ -543,5 +543,21 @@
   "withdrawal.confirmed_body": "Your withdrawal is complete. The amount below was delivered to your wallet.",
   "withdrawal.pending": "Confirming your withdrawal",
   "withdrawal.pending_body": "Your wallet approval has been sent. We are checking the network for the result.",
-  "withdrawal.another": "Make another withdrawal"
+  "withdrawal.another": "Make another withdrawal",
+  "scope.testnet": "Stellar testnet only. MKA, MKB and MKOUT are test tokens with no monetary value.",
+  "scope.vaults": "These demo vaults have no yield strategies.",
+  "scope.details": "See supported vaults and limits.",
+  "positions.start_deposit": "Deposit test tokens to get shares",
+  "balance.observed": "Last read at ledger {ledger}. Refresh to check again.",
+  "onboard.connect": "Connect Freighter with Stellar testnet selected.",
+  "onboard.prepare": "Fund the account, add token trustlines and get test tokens using the wallet tools.",
+  "onboard.withdraw": "Deposit test tokens to receive vault shares, then preview and review a withdrawal.",
+  "input.address": "Enter a Stellar account address beginning with G. Copy the full address from your wallet.",
+  "service.rate_limited": "Too many requests. Wait a minute, then try again. Your entered amounts are still here.",
+  "service.host_paused": "The service is temporarily offline. Try again later. You can still check a saved transaction from Transactions.",
+  "watch.limit": "This browser already has 20 alerts. Remove an alert from Alerts before adding another.",
+  "watch.loading": "Loading your saved alerts",
+  "watch.saving": "Saving this alert",
+  "watch.updating": "Updating this alert",
+  "watch.notification_failed": "Browser notifications could not be enabled. Your alerts remain available on this page."
 }

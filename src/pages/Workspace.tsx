@@ -49,7 +49,10 @@ import {
   Identity,
   icon,
   shorten,
+  TestnetScope,
 } from "../components/Shared.js";
+import { AmountField } from "../components/AmountField.js";
+import { validateAmount } from "../validation.js";
 import { SubmissionRecovery } from "../components/SubmissionRecovery.js";
 import { ReviewPanel, SetupPanel } from "../components/Review.js";
 import { WithdrawalReadiness } from "../components/WithdrawalReadiness.js";
@@ -132,7 +135,10 @@ export function Workspace({
       record: RecoveryRecord;
       saved: boolean;
     }>(),
-    [balanceLoading, setBalanceLoading] = useState(false);
+    [balanceLoading, setBalanceLoading] = useState(false),
+    [balanceError, setBalanceError] = useState<unknown>();
+  const balanceGeneration = useRef(0),
+    balanceRequest = useRef<Promise<AccountState> | undefined>(undefined);
   const busyRef = useRef(false);
   const watched = useRef<{ sharesRaw: string; minimumRaw: string } | undefined>(
     undefined,
@@ -148,25 +154,36 @@ export function Workspace({
       (t) => t.address === bundle.profile.settlement,
     )!;
   const refresh = useCallback(async () => {
-    if (!owner) return;
+    if (!owner || balanceRequest.current) return;
+    const g = balanceGeneration.current;
+    const request = api.account(owner, bundle.epoch);
+    balanceRequest.current = request;
     setBalanceLoading(true);
     try {
-      const result = await api.account(owner, bundle.epoch);
+      const result = await request;
+      if (g !== balanceGeneration.current) return;
       setAccount(result);
+      setBalanceError(undefined);
       onAccountChange?.(result, bundle);
     } catch (e) {
-      setError(e);
+      if (g === balanceGeneration.current) setBalanceError(e);
     } finally {
-      setBalanceLoading(false);
+      if (balanceRequest.current === request) balanceRequest.current = undefined;
+      if (g === balanceGeneration.current) setBalanceLoading(false);
     }
   }, [owner, bundle.epoch, onAccountChange]);
   useEffect(() => {
+    setAccount(initialAccount?.owner === owner ? initialAccount : undefined);
+    setBalanceError(undefined);
+    setBalanceLoading(false);
     void refresh();
     const timer = setInterval(() => {
       if (!busyRef.current && !prompt.current) void refresh();
     }, 15000);
     return () => {
       clearInterval(timer);
+      balanceGeneration.current++;
+      balanceRequest.current = undefined;
       generation.current++;
       controller.current.invalidate();
     };
@@ -515,7 +532,6 @@ export function Workspace({
     <main id="main" className="workspace wrap">
       <div className="workspace-title">
         <div>
-          <p className="kicker">{bundle.vaultName}</p>
           <h1>
             {t(
               identity && mode === "exit"
@@ -547,8 +563,9 @@ export function Workspace({
           </button>
         )}
       </div>
-      <div className="workspace-grid">
-        <aside className="portfolio">
+      <TestnetScope />
+      <div className={identity ? "workspace-grid" : "workspace-grid disconnected"}>
+        {identity && <aside className="portfolio">
           <div className="portfolio-top">
             <h2>{t("workspace.portfolio")}</h2>
             <button
@@ -566,6 +583,8 @@ export function Workspace({
               ? formatAmount(account.sharesRaw, bundle.shareDecimals)
               : t(owner ? "common.loading_balance" : "workspace.load")}
           </strong>
+          {account && <small>{t("balance.observed", { ledger: account.ledger })}</small>}
+          <ErrorNotice error={balanceError} />
           <div className="portfolio-tokens">
             <h3>{t("workspace.tokens")}</h3>
             {bundle.tokens.map((token) => {
@@ -603,7 +622,7 @@ export function Workspace({
               <button
                 className="text-button"
                 onClick={disconnect}
-                disabled={signing}
+                disabled={busy || signing || !!unsent}
               >
                 {t("workspace.disconnect")}
               </button>
@@ -620,7 +639,7 @@ export function Workspace({
             {t("route.contracts")}
             <ArrowUpRight {...icon} />
           </a>
-        </aside>
+        </aside>}
         <div
           className={
             mode === "exit"
@@ -705,6 +724,7 @@ export function Workspace({
               ? selection
               : null}
             <ErrorNotice error={error} focusRequest={errorFocusRequest} />
+            {!account && <ErrorNotice error={balanceError} />}
             {unsent && (
               <SubmissionRecovery
                 hash={unsent.hash}
@@ -722,6 +742,11 @@ export function Workspace({
                 </span>
                 <h2>{t("workspace.ready")}</h2>
                 <p>{t("workspace.connect_body")}</p>
+                <ol className="onboarding-steps">
+                  <li>{t("onboard.connect")}</li>
+                  <li>{t("onboard.prepare")}</li>
+                  <li>{t("onboard.withdraw")}</li>
+                </ol>
                 <button className="button" onClick={() => void connect()}>
                   {t("wallet.connect")}
                   <ArrowUpRight {...icon} />
@@ -909,67 +934,22 @@ export function Workspace({
                             (t) => t.address === a.asset,
                           );
                         return (
-                          <div className="amount-field" key={a.asset}>
-                            <span>
-                              {t("deposit.amount", { token: token.symbol })}
-                              <button
-                                type="button"
-                                className="text-button"
-                                disabled={!balance || busy}
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  invalidate();
-                                  setAmounts((v) =>
-                                    v.map((a, n) =>
-                                      n === i
-                                        ? formatAmount(
-                                            balance!.balanceRaw,
-                                            token.decimals,
-                                          )
-                                        : a,
-                                    ),
-                                  );
-                                }}
-                              >
-                                {t("action.max")}
-                              </button>
-                            </span>
-                            <div>
-                              <input
-                                inputMode="decimal"
-                                autoComplete="off"
-                                value={amounts[i]}
-                                onChange={(e) => {
-                                  invalidate();
-                                  setAmounts((v) =>
-                                    v.map((a, n) =>
-                                      n === i ? e.target.value : a,
-                                    ),
-                                  );
-                                }}
-                                disabled={!ready || busy}
-                                aria-label={t("deposit.amount", {
-                                  token: token.symbol,
-                                })}
-                              />
-                              <b>{token.symbol}</b>
-                            </div>
-                            <small>
-                              {t("action.available")}{" "}
-                              {balance
-                                ? formatAmount(
-                                    balance.balanceRaw,
-                                    token.decimals,
-                                  )
-                                : t("common.unknown")}
-                            </small>
-                          </div>
+                          <AmountField key={a.asset}
+                            label={t("deposit.amount", { token: token.symbol })}
+                            value={amounts[i] ?? ""} decimals={token.decimals} unit={token.symbol}
+                            balanceRaw={balance?.balanceRaw} disabled={!ready || busy}
+                            onChange={value => { invalidate(); setAmounts(v => v.map((a, n) => n === i ? value : a)); }}
+                            hint={t("action.available") + " " + (balance ? formatAmount(balance.balanceRaw, token.decimals) : t("common.unknown"))}
+                            action={<button type="button" className="text-button" disabled={!balance || busy}
+                              onClick={() => { invalidate(); setAmounts(v => v.map((a, n) => n === i ? formatAmount(balance!.balanceRaw, token.decimals) : a)); }}>
+                              {t("action.max")}</button>}
+                          />
                         );
                       })}
                       <p className="fine-print">{t("deposit.note")}</p>
                       <button
                         className="button"
-                        disabled={!ready || busy || amounts.some((v) => !v)}
+                        disabled={!ready || busy || amounts.some((v, i) => !!validateAmount(v, bundle.tokens.find(t => t.address === bundle.profile.assets[i]!.asset)!.decimals, { balanceRaw: account?.tokens.find(t => t.address === bundle.profile.assets[i]!.asset)?.balanceRaw }).issue)}
                         onClick={() => void prepare()}
                       >
                         {busy ? <Busy /> : t("deposit.review")}
@@ -995,53 +975,19 @@ export function Workspace({
                       </label>
                       {sizeMode === "shares" ? (
                         <>
-                          <div className="amount-field">
-                            <span>
-                              {t("action.shares")}
-                              <button
-                                type="button"
-                                className="text-button"
-                                disabled={!account?.sharesRaw || busy}
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  invalidate();
-                                  setQuote(undefined);
-                                  setShares(
-                                    formatAmount(
-                                      account!.sharesRaw!,
-                                      bundle.shareDecimals,
-                                    ),
-                                  );
-                                }}
-                              >
-                                {t("action.max")}
-                              </button>
-                            </span>
-                            <div>
-                              <input
-                                inputMode="decimal"
-                                autoComplete="off"
-                                value={shares}
-                                disabled={!ready || busy}
-                                onChange={(e) => {
-                                  invalidate();
-                                  setShares(e.target.value);
-                                  setQuote(undefined);
-                                }}
-                                aria-label={t("action.shares")}
-                              />
-                              <b>{t("app.shares_unit")}</b>
-                            </div>
-                            <small>
-                              {t("action.available")}{" "}
-                              {account?.sharesRaw
-                                ? formatAmount(
-                                    account.sharesRaw,
-                                    bundle.shareDecimals,
-                                  )
-                                : t("common.unknown")}
-                            </small>
-                          </div>
+                          <AmountField
+                            label={t("action.shares")}
+                            value={shares}
+                            onChange={value => { invalidate(); setShares(value); setQuote(undefined); }}
+                            decimals={bundle.shareDecimals}
+                            unit={t("app.shares_unit")}
+                            disabled={!ready || busy}
+                            balanceRaw={account?.sharesRaw}
+                            hint={t("action.available") + " " + (account?.sharesRaw ? formatAmount(account.sharesRaw, bundle.shareDecimals) : t("common.unknown"))}
+                            action={<button type="button" className="text-button" disabled={!ready || busy || account?.sharesRaw === "0"} onClick={() => {
+                              invalidate(); setQuote(undefined); setShares(formatAmount(account!.sharesRaw!, bundle.shareDecimals));
+                            }}>{t("action.max")}</button>}
+                          />
                           <div
                             className="withdrawal-presets"
                             role="group"
@@ -1095,23 +1041,10 @@ export function Workspace({
                       ) : (
                         <>
                           <p>{t("plan.intro")}</p>
-                          <label className="amount-field">
-                            <span>{t("plan.target")}</span>
-                            <div>
-                              <input
-                                inputMode="decimal"
-                                aria-label={t("plan.target")}
-                                value={target}
-                                disabled={!ready || busy}
-                                onChange={(e) => {
-                                  invalidate();
-                                  setQuote(undefined);
-                                  setTarget(e.target.value);
-                                }}
-                              />
-                              <b>{settlement.symbol}</b>
-                            </div>
-                          </label>
+                          <AmountField label={t("plan.target")} value={target}
+                            onChange={value => { invalidate(); setQuote(undefined); setTarget(value); }}
+                            decimals={settlement.decimals} unit={settlement.symbol} disabled={!ready || busy}
+                          />
                         </>
                       )}
                       <details className="withdrawal-protection">
@@ -1139,7 +1072,7 @@ export function Workspace({
                         disabled={
                           !ready ||
                           busy ||
-                          !(sizeMode === "shares" ? shares : target)
+                          !validateAmount(sizeMode === "shares" ? shares : target, sizeMode === "shares" ? bundle.shareDecimals : settlement.decimals, sizeMode === "shares" ? { balanceRaw: account?.sharesRaw } : {}).raw
                         }
                         onClick={() =>
                           void (sizeMode === "shares"
@@ -1253,24 +1186,12 @@ export function Workspace({
                           <p className="fine-print">
                             {t("withdrawal.quote_note")}
                           </p>
-                          <label className="amount-field minimum-field">
-                            <span>{t("action.minimum")}</span>
-                            <div>
-                              <input
-                                inputMode="decimal"
-                                autoComplete="off"
-                                value={minimum}
-                                onChange={(e) => {
-                                  invalidate();
-                                  setMinimum(e.target.value);
-                                }}
-                                disabled={busy || sizeMode === "target"}
-                                aria-label={t("action.minimum")}
-                              />
-                              <b>{settlement.symbol}</b>
-                            </div>
-                            <small>{t("exit.minimum_note")}</small>
-                          </label>
+                          <AmountField label={t("action.minimum")} value={minimum}
+                            onChange={value => { invalidate(); setMinimum(value); }}
+                            decimals={settlement.decimals} unit={settlement.symbol}
+                            maximumRaw={quote.receiveRaw} disabled={busy || sizeMode === "target"}
+                            hint={t("exit.minimum_note")}
+                          />
                           <WatchButton
                             owner={owner!}
                             bundle={bundle}
@@ -1304,7 +1225,7 @@ export function Workspace({
                         </button>
                         <button
                           className="button"
-                          disabled={!ready || busy || !quote || !minimum}
+                          disabled={!ready || busy || !quote || !validateAmount(minimum, settlement.decimals, { maximumRaw: quote.receiveRaw }).raw}
                           onClick={() => void prepare()}
                         >
                           {busy ? (

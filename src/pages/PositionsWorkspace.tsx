@@ -63,25 +63,35 @@ export function PositionsWorkspace({
   const outputRoutes = routes.filter(
     (b) => b.profile.vault.address === bundle.profile.vault.address,
   );
+  const readGeneration = useRef(0), readActive = useRef(false);
   const refresh = useCallback(async () => {
-    if (!identity) return;
+    if (!identity || readActive.current) return;
+    const g = readGeneration.current;
+    readActive.current = true;
     setLoading(true);
     try {
-      setPositions(await api.positions(identity.address));
+      const result = await api.positions(identity.address);
+      if (g !== readGeneration.current) return;
+      setPositions(result);
       setError(undefined);
     } catch (error) {
+      if (g !== readGeneration.current) return;
       setError(error);
       setPositions(undefined);
     } finally {
-      setLoading(false);
+      if (g === readGeneration.current) { readActive.current = false; setLoading(false); }
     }
-  }, [identity?.address]);
+  }, [identity?.address, identity?.networkPassphrase]);
   useEffect(() => {
+    setPositions(undefined);
+    setWalletSnapshot(undefined);
+    setLoading(false);
+    setError(undefined);
     void refresh();
     const timer = setInterval(() => {
       if (!lockedRef.current) void refresh();
     }, 30000);
-    return () => clearInterval(timer);
+    return () => { clearInterval(timer); readGeneration.current++; readActive.current = false; };
   }, [refresh]);
   useEffect(() => {
     if (focusAfterChange.current)
@@ -227,7 +237,12 @@ export function PositionsWorkspace({
         </label>
       </div>
       {positions && !positions.positions.length && mode === "exit" && (
-        <p>{t("positions.empty")}</p>
+        <div className="position-empty">
+          <p>{t("positions.empty")}</p>
+          <button className="button secondary" disabled={locked} onClick={() => setMode("deposit")}>
+            {t("positions.start_deposit")}
+          </button>
+        </div>
       )}
       <Identity
         label={t("contracts.vault")}

@@ -63,6 +63,15 @@ export function Busy({ label }: { label?: string } = {}) {
     </span>
   );
 }
+
+export function TestnetScope() {
+  return (
+    <p className="testnet-scope">
+      {t("scope.testnet")} {t("scope.vaults")}{" "}
+      <a href="/help#testnet">{t("scope.details")}</a>
+    </p>
+  );
+}
 export function Identity({
   label,
   value,

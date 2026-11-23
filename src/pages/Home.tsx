@@ -13,7 +13,7 @@ import {
   type DeploymentBundle,
 } from "@mierkhat/sdk";
 import { t, type CopyKey } from "../copy.js";
-import { icon } from "../components/Shared.js";
+import { icon, TestnetScope } from "../components/Shared.js";
 export function Home({
   network,
   bundle,
@@ -55,6 +55,7 @@ export function Home({
               <ArrowUpRight {...icon} />
             </a>
           </div>
+          <TestnetScope />
         </div>
         <svg
           className="hero-flow"

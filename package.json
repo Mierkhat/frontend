@@ -12,23 +12,24 @@
     "prebuild": "pnpm --filter @mierkhat/copy build && pnpm --filter @mierkhat/react build"
   },
   "dependencies": {
+    "@mierkhat/copy": "workspace:^0.1.0",
     "@mierkhat/sdk": "file:.vendor/mierkhat-sdk-0.1.0-0a5cad9767d9.tgz",
     "@stellar/freighter-api": "6.0.1",
-    "react": "19.3.1",
-    "react-dom": "19.3.1",
     "lucide-react": "1.61.0",
-    "@mierkhat/copy": "workspace:^0.1.0"
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
   },
   "devDependencies": {
+    "@playwright/test": "1.64.1",
     "@types/node": "24.10.0",
     "@types/react": "19.2.2",
     "@types/react-dom": "19.2.2",
     "@vitejs/plugin-react": "6.1.2",
-    "vite": "8.3.5",
+    "happy-dom": "21.0.4",
+    "sharp": "0.34.5",
     "typescript": "7.0.2",
-    "vitest": "5.0.5",
-    "@playwright/test": "1.64.1",
-    "sharp": "0.34.5"
+    "vite": "8.3.5",
+    "vitest": "5.0.5"
   },
   "license": "MIT",
   "repository": {
