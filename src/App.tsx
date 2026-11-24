@@ -1,6 +1,6 @@
 import { WalletDialog } from "./components/WalletDialog.js";
 import { SubmissionRecovery } from "./components/SubmissionRecovery.js";
-import { useCallback, useEffect, useState, useRef } from "react";
+import { lazy, Suspense, useCallback, useEffect, useState, useRef, type ComponentType } from "react";
 import {
   ExitController,
   MierkhatError,
@@ -28,11 +28,29 @@ import { MigrationReviewPanel } from "./components/MigrationReview.js";
 import { ReviewPanel } from "./components/Review.js";
 import { Home } from "./pages/Home.js";
 import { type WalletIdentity } from "./pages/Workspace.js";
-import { PositionsWorkspace } from "./pages/PositionsWorkspace.js";
-import { WithdrawalTools, Alerts } from "./pages/WithdrawalTools.js";
-import { Migration } from "./pages/Migration.js";
-import { Activity, ReceiptPage } from "./pages/Activity.js";
-import { Contracts, Help } from "./pages/Information.js";
+function RouteLoadFailure() {
+  return (
+    <main id="main" className="wrap standard-page">
+      <h1>{t("common.unavailable")}</h1>
+      <ErrorNotice error={new MierkhatError("RouteLoad", "service.unavailable", true)} />
+      <a className="button" href={location.href}>{t("common.refresh")}</a>
+    </main>
+  );
+}
+function loadPage<P extends object>(load: () => Promise<ComponentType<P>>) {
+  return lazy<ComponentType<P>>(async () => {
+    try { return { default: await load() }; }
+    catch { return { default: RouteLoadFailure }; }
+  });
+}
+const PositionsWorkspace = loadPage(() => import("./pages/PositionsWorkspace.js").then(m => m.PositionsWorkspace));
+const WithdrawalTools = loadPage(() => import("./pages/WithdrawalTools.js").then(m => m.WithdrawalTools));
+const Alerts = loadPage(() => import("./pages/WithdrawalTools.js").then(m => m.Alerts));
+const Migration = loadPage(() => import("./pages/Migration.js").then(m => m.Migration));
+const Activity = loadPage(() => import("./pages/Activity.js").then(m => m.Activity));
+const ReceiptPage = loadPage(() => import("./pages/Activity.js").then(m => m.ReceiptPage));
+const Contracts = loadPage(() => import("./pages/Information.js").then(m => m.Contracts));
+const Help = loadPage(() => import("./pages/Information.js").then(m => m.Help));
 export { ReviewPanel } from "./components/Review.js";
 export { ThemeMenu } from "./components/Shared.js";
 const bundle = bundles.find((b) => b.environment === "testnet");
@@ -307,7 +325,9 @@ export function App() {
           onClose={closeWalletPicker}
         />
       )}
-      {content}
+      <Suspense fallback={<main id="main" className="wrap standard-page"><Busy /></main>}>
+        {content}
+      </Suspense>
       <Footer />
     </>
   );
