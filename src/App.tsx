@@ -44,6 +44,8 @@ export function App() {
     [walletPicker, setWalletPicker] = useState(false),
     [connecting, setConnecting] = useState(false);
   const walletOpener = useRef<HTMLElement | null>(null);
+  const networkGeneration = useRef(0),
+    networkRequest = useRef<Promise<void> | undefined>(undefined);
   const connectionGeneration = useRef(0),
     connectionRequest = useRef<Promise<WalletIdentity> | undefined>(undefined);
   const path = location.pathname;
@@ -52,20 +54,36 @@ export function App() {
     if (path === "/" && location.hash === "#conditions")
       document.getElementById("conditions")?.scrollIntoView({ block: "start" });
   }, [path]);
-  const refresh = useCallback(async () => {
-    try {
-      setNetwork(await api.network());
-      setNetworkError(undefined);
-    } catch (e) {
-      setNetworkError(e);
-      setNetwork(undefined);
-    }
+  const refresh = useCallback(() => {
+    if (networkRequest.current) return networkRequest.current;
+    const generation = networkGeneration.current;
+    const request = (async () => {
+      try {
+        const next = await api.network();
+        if (generation !== networkGeneration.current) return;
+        setNetwork(next);
+        setNetworkError(undefined);
+      } catch (e) {
+        if (generation !== networkGeneration.current) return;
+        setNetworkError(e);
+        setNetwork(undefined);
+      }
+    })();
+    networkRequest.current = request;
+    void request.finally(() => {
+      if (networkRequest.current === request) networkRequest.current = undefined;
+    });
+    return request;
   }, []);
   useEffect(() => {
     if (path !== "/") return;
     void refresh();
     const timer = setInterval(() => void refresh(), 15000);
-    return () => clearInterval(timer);
+    return () => {
+      clearInterval(timer);
+      networkGeneration.current++;
+      networkRequest.current = undefined;
+    };
   }, [refresh, path]);
   useEffect(() => {
     let alive = true;
